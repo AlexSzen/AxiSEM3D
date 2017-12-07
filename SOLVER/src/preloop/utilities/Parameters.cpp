@@ -79,6 +79,12 @@ void Parameters::registerAll() {
     registerPar("OUT_STATIONS_RECORD_INTERVAL");
     registerPar("OUT_STATIONS_DUMP_INTERVAL");
 	registerPar("OUT_STATIONS_WHOLE_SURFACE");
+	registerPar("ANIMATION");
+	registerPar("RMIN");
+	registerPar("RMAX");
+	registerPar("THETA_MIN");
+	registerPar("THETA_MAX");
+	registerPar("GLL_ANIMATION");
     
     // inparam.advanced
     registerPar("ATTENUATION_CG4");

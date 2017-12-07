@@ -7,6 +7,7 @@
 
 #include <vector>
 #include "eigenp.h"
+#include "eigenc.h"
 #include "Mapping.h"
 
 class ExodusModel;
@@ -100,6 +101,9 @@ public:
     // get spatial range
     void getSpatialRange(double &s_max, double &s_min, double &z_max, double &z_min) const;
     bool nearMe(double s, double z) const;
+	
+	// field variable for animations/wavefields 
+	const vec_CMatPP getMaterialFourier(const std::string &parName, int refType) const;
         
 protected:
         

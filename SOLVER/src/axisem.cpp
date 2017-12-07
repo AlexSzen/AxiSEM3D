@@ -141,6 +141,9 @@ int axisem_main(int argc, char *argv[]) {
         pl.mSTF->release(*(sv.mDomain));
         MultilevelTimer::end("Release STF", 1);
         
+		MultilevelTimer::begin("Dump mesh quantities",1);
+		pl.mMesh->dumpFields(*(sv.mDomain), *(pl.mSource),*(pl.mParameters));
+		MultilevelTimer::end("Dump mesh quantities",1);
         // release receivers
         MultilevelTimer::begin("Release Receivers", 1);
         pl.mReceivers->release(*(sv.mDomain), *(pl.mMesh));

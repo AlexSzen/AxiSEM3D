@@ -44,8 +44,8 @@ public:
     
     ////////////////// flatten-structured cast //////////////////
     // structured
-    template<class TIN>
-    static void structuredUseFirstRow(const TIN &flat, RDMatPP &strct) {
+    template<class TIN, class TOUT>
+    static void structuredUseFirstRow(const TIN &flat, TOUT &strct) {
         for (int ipol = 0; ipol < nPntEdge; ipol++) {
             strct.block(ipol, 0, 1, nPntEdge) 
             = flat.block(0, nPntEdge * ipol, 1, nPntEdge);
@@ -53,8 +53,8 @@ public:
     };
     
     // flatten
-    template<class TOUT>
-    static void flattenFillWithFirstRow(const RDMatPP &strct, TOUT &flat) {
+    template<class TIN, class TOUT>
+    static void flattenFillWithFirstRow(const TIN &strct, TOUT &flat) {
         int nr = flat.rows();
         for (int ipol = 0; ipol < nPntEdge; ipol++) {
             flat.block(0, nPntEdge * ipol, nr, nPntEdge) 
@@ -79,5 +79,8 @@ public:
     
     // compute value at phi 
     static RDRowN computeFourierAtPhi(const RDMatXN &data, double phi);
+	
+	//compute vector of fourier coeffs, used for dumping material properties.
+	static const vec_CMatPP computeFourierStructured(const RDMatXN &data);
 };
 

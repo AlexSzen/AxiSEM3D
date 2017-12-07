@@ -31,6 +31,12 @@ public:
 	// side-wise
 	virtual void feedDispOnSide(int side, CMatXX_RM &buffer, int row) const = 0; 
 	RDMatXX getCoordsOnSide(int side) const; 
+	
+	// get coords of all points in element 
+	vec_RMatPP getCoordsPoints() const;
+	
+	// need dumping for wavefields?
+	bool needDumping(double rmin, double rmax,double tmin,double tmax);
     
     // verbose
     virtual std::string verbose() const = 0;

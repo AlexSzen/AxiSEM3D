@@ -88,3 +88,29 @@ RDMatXX Element::getCoordsOnSide(int side) const {
 	return sz;
 }
 
+vec_RMatPP Element::getCoordsPoints() const {
+	
+	vec_RMatPP elemCoords(2,RMatPP::Zero());
+	
+	for (int ipol = 0; ipol <= nPol; ipol++) {
+		for (int jpol = 0; jpol <= nPol; jpol ++) {
+			int ipnt = nPntEdge * ipol + jpol;
+			RDCol2 coords = mPoints[ipnt]->getCoords();
+			elemCoords[0](ipol,jpol) = coords(0);
+			elemCoords[1](ipol,jpol) = coords(1);
+		}
+	}
+	return elemCoords;
+	
+	
+}
+
+#include "XMath.h"
+bool Element::needDumping(double rmin, double rmax,double tmin,double tmax) {
+	RDCol2 sz= mPoints[12]->getCoords(); //midpoint
+	RDCol2 rt = Geodesy::rtheta(sz);
+	if (rmin<rt(0) && rmax>rt(0) && tmin<rt(1) && tmax>rt(1)) return true;
+	return false; 
+		
+}
+

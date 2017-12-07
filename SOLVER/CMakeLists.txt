@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # compiler suit
 SET(CMAKE_C_COMPILER           mpicc)
 SET(CMAKE_CXX_COMPILER         mpicxx)
-SET(CMAKE_Fortran_COMPILER     gfortran)
+SET(CMAKE_Fortran_COMPILER     mpif90)
 
 # external packages
 # uncomment and edit the following lines to specify preferred prefix
@@ -23,8 +23,11 @@ SET(CMAKE_Fortran_COMPILER     gfortran)
 # SET(FFTW_ROOT             edit_here)
 # SET(BOOST_ROOT            edit_here)
 # SET(METIS_ROOT            edit_here)
-# SET(NETCDF_ROOT           edit_here)
 
+SET(HDF5_ROOT             /home/alex/anaconda2/)
+SET(NETCDF_ROOT           /home/alex/pnetcdf/)
+SET(NETCDF_INCLUDE_DIR           /home/alex/pnetcdf/include/)
+SET(NETCDF_LIBRARIES          /home/alex/pnetcdf/lib/libnetcdf.so	)
 # polynomial order of spectral elements (from 1 to 8)
 SET(NPOL 4)
 
@@ -35,7 +38,7 @@ SET(USE_DOUBLE FALSE)
 # Modules that require parallel NetCDF: 
 # * seismic inversion
 # * wavefield and model visualisation
-SET(USE_PARALLEL_NETCDF FALSE)
+SET(USE_PARALLEL_NETCDF TRUE)
 
 # additional libraries to link with
 # such as HDF5 when NetCDF is built with --disable-shared (e.g., the parallel build)
@@ -97,7 +100,11 @@ include_directories(${Boost_INCLUDE_DIRS})
 find_package(METIS REQUIRED)
 include_directories(${METIS_INCLUDE_DIR})
 # netcdf
-find_package(NETCDF REQUIRED)
+#find_package(NETCDF REQUIRED)
+if (NETCDF_ROOT)
+    set(ENV{NETCDF_ROOT} ${NETCDF_ROOT})
+endif ()
+
 include_directories(${NETCDF_INCLUDE_DIR})
 
 ############# local includes #############
@@ -260,6 +267,7 @@ add_executable(
     src/preloop/mesh/Quad.cpp
     src/preloop/mesh/Mesh.cpp
     src/preloop/mesh/SlicePlot.cpp
+    src/preloop/mesh/MeshDump.cpp
 
     src/preloop/nrfield/NrField.cpp
     src/preloop/nrfield/ConstNrField.cpp

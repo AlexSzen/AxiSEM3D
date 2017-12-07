@@ -201,3 +201,22 @@ RDRowN XMath::computeFourierAtPhi(const RDMatXN &data, double phi) {
     }
     return result;
 }
+
+const vec_CMatPP XMath::computeFourierStructured(const RDMatXN &data) {
+	int nslices = data.rows();
+	int nfourier = nslices/2 +1;
+	vec_CMatPP result(nfourier,CMatPP::Zero());
+	CMatXX unstructured(nfourier, nPntElem);
+	
+	for (int col = 0; col < nPntElem; col++) {
+		PreloopFFTW::getR2C_RMat(nslices) = data.col(col);
+		PreloopFFTW::computeR2C(nslices);
+		CDColX &fourier = PreloopFFTW::getR2C_CMat(nslices);
+		unstructured.col(col) = fourier.cast<Complex>();
+		
+	}
+	for (int row = 0; row < nslices/2+1; row++)
+		structuredUseFirstRow(unstructured.row(row), result[row]);
+	return result;
+	
+}

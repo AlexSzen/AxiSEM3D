@@ -647,6 +647,10 @@ RDRowN Quad::getMaterialOnSlice(const std::string &parName, int refType, double 
     return XMath::computeFourierAtPhi(mMaterial->getProperty(parName, refType), phi);
 }
 
+const vec_CMatPP Quad::getMaterialFourier(const std::string &parName, int refType) const {
+	return XMath::computeFourierStructured(mMaterial->getProperty(parName,refType));
+}
+
 void Quad::getSpatialRange(double &s_max, double &s_min, double &z_max, double &z_min) const {
     s_max = mNodalCoords.row(0).maxCoeff();
     s_min = mNodalCoords.row(0).minCoeff();

@@ -22,9 +22,12 @@ struct DecomposeOption;
 struct MessagingInfo;
 struct LearnParameters;
 class SlicePlot;
+class Source;
+class MeshDump;
 
 class Mesh {
     friend class SlicePlot;
+	friend class MeshDump;
 public:
     ~Mesh();
     
@@ -46,7 +49,10 @@ public:
     void buildWeighted();
     
     // step 5: release to domain 
-    void release(Domain &domain);    
+    void release(Domain &domain);  
+	
+	//optional : dump stuff for animation and kernels (connectivity, coordinates, model, etc)
+	void dumpFields(const Domain &domain, const Source &source, const Parameters &par);  
     
     // optional step: test stiffness and mass
     void test();
@@ -139,6 +145,10 @@ private:
     
     ////////////////// slice plotss //////////////////
     std::vector<SlicePlot *> mSlicePlots;
+	
+	////////////////// dump various fields for animation and kernels ////////////////////////
+	MeshDump *mMeshDump;
+	bool mDump; //whether to dump or not
 };
 
 
