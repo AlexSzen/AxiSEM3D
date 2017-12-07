@@ -23,11 +23,11 @@ struct MessagingInfo;
 struct LearnParameters;
 class SlicePlot;
 class Source;
-class MeshDump;
+class MeshIO;
 
 class Mesh {
     friend class SlicePlot;
-	friend class MeshDump;
+	friend class MeshIO;
 public:
     ~Mesh();
     
@@ -147,7 +147,7 @@ private:
     std::vector<SlicePlot *> mSlicePlots;
 	
 	////////////////// dump various fields for animation and kernels ////////////////////////
-	MeshDump *mMeshDump;
+	MeshIO *mMeshIO;
 	bool mDump; //whether to dump or not
 };
 

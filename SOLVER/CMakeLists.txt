@@ -267,7 +267,7 @@ add_executable(
     src/preloop/mesh/Quad.cpp
     src/preloop/mesh/Mesh.cpp
     src/preloop/mesh/SlicePlot.cpp
-    src/preloop/mesh/MeshDump.cpp
+    src/preloop/mesh/MeshIO.cpp
 
     src/preloop/nrfield/NrField.cpp
     src/preloop/nrfield/ConstNrField.cpp

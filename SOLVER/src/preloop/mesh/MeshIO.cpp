@@ -1,4 +1,4 @@
-#include "MeshDump.h"
+#include "MeshIO.h"
 #include "Parameters.h"
 #include "NetCDF_Writer.h"
 #include "NetCDF_Reader.h"
@@ -11,12 +11,12 @@
 #include "SlicePlot.h"
 #include "Quad.h"
 
-MeshDump::MeshDump(const Mesh *mesh, const std::string &fname): mMesh(mesh), mFileName(fname) {
+MeshIO::MeshIO(const Mesh *mesh, const std::string &fname): mMesh(mesh), mFileName(fname) {
 	//nothing
 }
 
 
-void MeshDump::dumpFields(const Domain &domain, const Source &source, const Parameters &par) {
+void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parameters &par) {
 	
 	// ---------- <GET PARAMETERS> ----------
 	double rmin = par.getValue<double>("RMIN")*1e3;

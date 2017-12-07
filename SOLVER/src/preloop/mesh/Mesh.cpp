@@ -22,7 +22,7 @@
 
 #include "MultilevelTimer.h"
 #include "SlicePlot.h"
-#include "MeshDump.h"
+#include "MeshIO.h"
 #include <fstream>
 #include <cfloat>
 
@@ -33,7 +33,7 @@ Mesh::~Mesh() {
     for (const auto &sp: mSlicePlots) {
         delete sp;
     }    
-	delete mMeshDump;
+	delete mMeshIO;
 }
 
 Mesh::Mesh(const ExodusModel *exModel, const NrField *nrf, 
@@ -88,7 +88,7 @@ mExModel(exModel), mNrField(nrf), mSrcLat(srcLat), mSrcLon(srcLon), mSrcDep(srcD
 	
 	// mesh dumps 
 	std::string fname = Parameters::sOutputDirectory + "/animations/animation_db.nc4";
-	mMeshDump = new MeshDump(this, fname);
+	mMeshIO = new MeshIO(this, fname);
 	mDump = 1;
 }
 
@@ -147,7 +147,7 @@ void Mesh::buildWeighted() {
 }
 
 void Mesh::dumpFields(const Domain &domain, const Source &source,const Parameters &par) { 
-    if(mDump) mMeshDump->dumpFields(domain, source, par);	
+    if(mDump) mMeshIO->dumpFields(domain, source, par);	
 }
 
 void Mesh::release(Domain &domain) {
