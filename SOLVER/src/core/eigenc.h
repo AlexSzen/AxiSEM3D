@@ -38,6 +38,7 @@ typedef Eigen::Matrix<Real, 1, nPntElem> RRowN;
 typedef Eigen::Matrix<Real, nPntEdge, nPntEdge, Eigen::RowMajor> RMatPP;
 typedef Eigen::Matrix<Complex, nPntEdge, nPntEdge, Eigen::RowMajor> CMatPP;
 typedef std::array<RMatPP, 2> ar2_RMatPP;
+typedef std::array<RMatPP, 6> ar6_RMatPP;
 typedef std::array<CMatPP, 3> ar3_CMatPP;
 typedef std::array<CMatPP, 6> ar6_CMatPP;
 typedef std::array<CMatPP, 9> ar9_CMatPP;
@@ -46,11 +47,15 @@ typedef std::vector<RMatXX_RM> vec_RMatXX_RM; //animation
 typedef std::vector<vec_RMatXX_RM> vec2_RMatXX_RM;
 typedef std::vector<vec2_RMatXX_RM> vec3_RMatXX_RM;
 typedef std::vector<ar2_RMatPP> vec_ar2_RMatPP;
+typedef std::vector<ar6_RMatPP> vec_ar6_RMatPP;
 typedef std::vector<CMatPP> vec_CMatPP;
 typedef std::vector<ar3_CMatPP> vec_ar3_CMatPP;
 typedef std::vector<ar6_CMatPP> vec_ar6_CMatPP;
 typedef std::vector<ar9_CMatPP> vec_ar9_CMatPP;
+typedef std::vector<vec_ar6_RMatPP> vec_vec_ar6_RMatPP;
 const ar2_RMatPP zero_ar2_RMatPP = {RMatPP::Zero(), RMatPP::Zero()};
+const ar6_RMatPP zero_ar6_RMatPP = {RMatPP::Zero(), RMatPP::Zero(), RMatPP::Zero(), 
+                                    RMatPP::Zero(), RMatPP::Zero(), RMatPP::Zero()};
 const ar3_CMatPP zero_ar3_CMatPP = {CMatPP::Zero(), CMatPP::Zero(), CMatPP::Zero()};
 const ar6_CMatPP zero_ar6_CMatPP = {CMatPP::Zero(), CMatPP::Zero(), CMatPP::Zero(), 
                                     CMatPP::Zero(), CMatPP::Zero(), CMatPP::Zero()};

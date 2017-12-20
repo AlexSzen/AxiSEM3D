@@ -14,6 +14,9 @@ public:
     
     // STEP 2: strain ==> stress
     virtual void strainToStress(FluidResponse &response) const = 0;
+	
+	// computes displacement from potential in fluid.
+	virtual void potToDisp(FluidResponse &response) const = 0;
     
     // verbose
     virtual std::string verbose() const = 0;

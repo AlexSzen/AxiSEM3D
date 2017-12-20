@@ -6,7 +6,7 @@
 #include <iostream>
 #include "eigenc.h"
 #include <map>
-
+#include "eigenp.h"
 #ifndef _SERIAL_BUILD
     #include "mpi.h"
 #else
@@ -332,6 +332,10 @@ struct MessagingInfo {
     std::vector<int> mNLocalPoints;
     // indecies of local points to be communicated for each proc
     std::vector<std::vector<int>> mILocalPoints;
+	// global indices of local element wise glls.
+	std::vector<IMatPP> mLocElemToGlobPoints;
+	// domain decomposition
+	IColX mElemToProc;
     // mpi requests
     std::vector<MPI_Request> mReqSend;
     std::vector<MPI_Request> mReqRecv;

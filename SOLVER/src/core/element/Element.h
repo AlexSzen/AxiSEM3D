@@ -37,6 +37,9 @@ public:
 	
 	// need dumping for wavefields?
 	bool needDumping(double rmin, double rmax,double tmin,double tmax);
+	
+	//get disp for wavefields 
+    virtual const vec_ar3_CMatPP &getDisp() const = 0;
     
     // verbose
     virtual std::string verbose() const = 0;

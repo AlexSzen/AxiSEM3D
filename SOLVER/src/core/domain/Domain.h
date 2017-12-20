@@ -17,6 +17,7 @@ class SourceTerm;
 class SourceTimeFunction;
 class PointwiseRecorder;
 class SurfaceRecorder;
+class DomainRecorder;
 struct MessagingInfo;
 struct MessagingBuffer;
 struct LearnParameters;
@@ -34,6 +35,7 @@ public:
     void setSTF(SourceTimeFunction *stf) {mSTF = stf;};
     void setPointwiseRecorder(PointwiseRecorder *recorderPW) {mPointwiseRecorder = recorderPW;};
 	void setSurfaceRecorder(SurfaceRecorder *recorderSF) {mSurfaceRecorder = recorderSF;};
+	void setDomainRecorder(DomainRecorder *recorderDM) {mDomainRecorder = recorderDM;};
     void setMessaging(MessagingInfo *msgInfo, MessagingBuffer *msgBuffer) 
         {mMsgInfo = msgInfo; mMsgBuffer = msgBuffer;};
     void addSFPoint(SolidFluidPoint *SFPoint) {mSFPoints.push_back(SFPoint);};
@@ -101,6 +103,8 @@ private:
     PointwiseRecorder *mPointwiseRecorder = 0;
 	// surface wavefield
     SurfaceRecorder *mSurfaceRecorder = 0;
+	// domain wavefield
+	DomainRecorder *mDomainRecorder = 0;
     // massaging 
     MessagingInfo *mMsgInfo = 0;
     MessagingBuffer *mMsgBuffer = 0;

@@ -170,6 +170,19 @@ void FluidElement::feedDispOnSide(int side, CMatXX_RM &buffer, int row) const {
 		"Not implemented."); 
 }
 
+const vec_ar3_CMatPP &FluidElement::getDisp() const {
+  // get chi
+  int ipnt = 0;
+  for (int ipol = 0; ipol <= nPol; ipol++)
+      for (int jpol = 0; jpol <= nPol; jpol++)
+          mPoints[ipnt++]->scatterDisplToElement(sResponse.mDispl, ipol, jpol, mMaxNu);
+  // u = nabla(chi) / rho       
+  mGradient->computeGrad(sResponse.mDispl, sResponse.mStrain, sResponse.mNu, sResponse.mNyquist);
+  mAcoustic->potToDisp(sResponse);
+  return sResponse.mStress;
+  
+}
+
 std::string FluidElement::verbose() const {
     if (mHasPRT) {
         return "FluidElement$" + mPRT->verbose() + "$" + mAcoustic->verbose();

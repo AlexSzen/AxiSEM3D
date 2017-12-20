@@ -53,6 +53,9 @@ public:
     
 	// side-wise
 	void feedDispOnSide(int side, CMatXX_RM &buffer, int row) const; 
+	
+	//get Disp for wavefields
+	const vec_ar3_CMatPP &getDisp() const;
     
     // verbose
     std::string verbose() const;

@@ -10,10 +10,14 @@
 class Acoustic3D: public Acoustic {
 public:
     // constructor
-    Acoustic3D(const RMatXN &KFluid): mKFlat(KFluid) {};
+    Acoustic3D(const RMatXN &KFluid, const RMatXN &KFluid_noquad): mKFlat(KFluid), mKFlatNoQuad(KFluid_noquad) {};
     
     // STEP 2: strain ==> stress
     void strainToStress(FluidResponse &response) const;
+
+	// get displacement from potential in fluid.
+	void potToDisp(FluidResponse &response) const;
+
     
     // verbose
     std::string verbose() const {return "Acoustic3D";};
@@ -26,4 +30,6 @@ public:
 
 private:
     RMatXN mKFlat;
+	RMatXN mKFlatNoQuad;
+
 };

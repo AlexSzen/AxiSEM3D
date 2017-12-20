@@ -10,6 +10,7 @@
 #include "SourceTimeFunction.h"
 #include "PointwiseRecorder.h"
 #include "SurfaceRecorder.h"
+#include "DomainRecorder.h"
 #include "XMPI.h"
 #include "NuWisdom.h"
 #include "MultilevelTimer.h"
@@ -186,12 +187,18 @@ void Domain::initializeRecorders() const {
 	if (mSurfaceRecorder) {
 		mSurfaceRecorder->initialize();
 	}
+	if (mDomainRecorder) {
+		mDomainRecorder->initialize();
+	}
 }
 
 void Domain::finalizeRecorders() const {
     mPointwiseRecorder->finalize();
 	if (mSurfaceRecorder) {
 		mSurfaceRecorder->finalize();
+	}
+	if (mDomainRecorder) {
+		mDomainRecorder->finalize();
 	}
 }
 
@@ -204,6 +211,9 @@ void Domain::record(int tstep, Real t) const {
 	if (mSurfaceRecorder) {
 		mSurfaceRecorder->record(tstep, t);
     }
+	if (mDomainRecorder) {
+		mDomainRecorder->record(tstep, t);
+	}
     
     #ifdef _MEASURE_TIMELOOP
         mTimerOthers->stop();
@@ -218,6 +228,10 @@ void Domain::dumpLeft() const {
     mPointwiseRecorder->dumpToFile();
 	if (mSurfaceRecorder) {
 		mSurfaceRecorder->dumpToFile();
+	}
+	
+	if (mDomainRecorder) {
+		mDomainRecorder->dumpToFile();
 	}
     
     #ifdef _MEASURE_TIMELOOP

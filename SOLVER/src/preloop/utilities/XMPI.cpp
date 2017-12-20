@@ -37,6 +37,8 @@ void XMPI::initialize(int argc, char *argv[]) {
         mkdir(Parameters::sOutputDirectory + "/plots");
         mkdir(Parameters::sOutputDirectory + "/develop");
 		mkdir(Parameters::sOutputDirectory + "/animations"); 
+		mkdir(Parameters::sOutputDirectory + "/wavefields");
+		mkdir(Parameters::sOutputDirectory + "/kernels");
     }
 }
 

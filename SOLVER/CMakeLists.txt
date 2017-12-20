@@ -134,7 +134,8 @@ include_directories(
 
     src/core/source
     src/core/output/pointwise
-	src/core/output/surface
+    src/core/output/surface
+    src/core/output/domain
     src/core/domain
     src/core/newmark
 
@@ -236,9 +237,12 @@ add_executable(
     src/core/output/pointwise/PointwiseRecorder.cpp
     src/core/output/pointwise/PointwiseIOAscii.cpp
     src/core/output/pointwise/PointwiseIONetCDF.cpp
-	src/core/output/surface/SurfaceRecorder.cpp
-	src/core/output/surface/SurfaceIO.cpp
-	src/core/output/surface/SurfaceInfo.cpp
+    src/core/output/surface/SurfaceRecorder.cpp
+    src/core/output/surface/SurfaceIO.cpp
+    src/core/output/surface/SurfaceInfo.cpp
+    src/core/output/domain/DomainRecorder.cpp
+    src/core/output/domain/DomainIO.cpp
+    src/core/output/domain/DomainInfo.cpp
     src/core/domain/Domain.cpp
     src/core/newmark/Newmark.cpp
 

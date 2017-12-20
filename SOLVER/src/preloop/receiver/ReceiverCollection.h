@@ -17,7 +17,7 @@ class ReceiverCollection {
 public:
     ReceiverCollection(const std::string &fileRec, bool geographic, 
         double srcLat, double srcLon, double srcDep, int duplicated, 
-		bool saveSurf);
+		bool saveSurf, bool saveWvf);
     ~ReceiverCollection();
     
     void release(Domain &domain, const Mesh &mesh); 
@@ -41,6 +41,13 @@ private:
     int mRecordInterval = 1;
     int mBufferSize = 1000;
     std::string mComponents = "RTZ";
+	
+	//wavefield options 
+	int mTotalRecordStepsWvf = 0; //wavefield needs to be downsampled
+	int mRecordIntervalWvf = 1;
+	int mBufferSizeWvf = 1;
+	double mRmin = 0., mRmax = 7.e6;
+	double mThetaMin = 0., mThetaMax = 180.;
     
     // IO
     std::vector<PointwiseIO *> mPointwiseIO;
@@ -51,6 +58,9 @@ private:
 	
 	// surface wavefield
 	bool mSaveWholeSurface;
+	
+	// domain wavefield
+	bool mSaveWavefieldDomain;
 	
 	// source location
 	double mSrcLat, mSrcLon, mSrcDep;

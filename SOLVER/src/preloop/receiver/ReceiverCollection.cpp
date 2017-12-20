@@ -17,13 +17,15 @@
 #include "PointwiseIOAscii.h"
 #include "PointwiseIONetCDF.h"
 #include "SurfaceRecorder.h"
+#include "DomainRecorder.h"
 #include "Mesh.h"
 #include "Quad.h"
+#include "Element.h"
 
 ReceiverCollection::ReceiverCollection(const std::string &fileRec, bool geographic, 
-    double srcLat, double srcLon, double srcDep, int duplicated, bool saveSurf):
+    double srcLat, double srcLon, double srcDep, int duplicated, bool saveSurf, bool saveWvf):
 mInputFile(fileRec), mGeographic(geographic), mSaveWholeSurface(saveSurf),
-mSrcLat(srcLat), mSrcLon(srcLon), mSrcDep(srcDep) {
+mSrcLat(srcLat), mSrcLon(srcLon), mSrcDep(srcDep), mSaveWavefieldDomain(saveWvf){
     std::vector<std::string> name, network;
     std::vector<double> theta, phi, depth;
 	if (!boost::iequals(fileRec, "none")) {
@@ -155,6 +157,17 @@ void ReceiverCollection::release(Domain &domain, const Mesh &mesh) {
 	    }
 		domain.setSurfaceRecorder(recorderSF);
 	}
+	
+	if (mSaveWavefieldDomain) {
+		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mBufferSizeWvf);
+		for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {
+			Element *elem = domain.getElement(ielem);
+			if ( elem->needDumping(mRmin,mRmax,mThetaMin,mThetaMax) ) {
+				recorderDM->addElement(elem);
+			}
+		}
+		domain.setDomainRecorder(recorderDM);
+	}
     MultilevelTimer::end("Release to Domain", 2);
 }
 
@@ -173,6 +186,9 @@ std::string ReceiverCollection::verbose() const {
     }
 	if (mSaveWholeSurface) {
 		ss << "  * Wavefield on the whole surface will be saved." << std::endl;
+	}
+	if (mSaveWavefieldDomain) {
+		ss << "  * Wavefield on the whole domain will be saved." << std::endl;
 	}
     ss << "========================= Receivers ========================\n" << std::endl;
     return ss.str();
@@ -209,18 +225,34 @@ void ReceiverCollection::buildInparam(ReceiverCollection *&rec, const Parameters
             "Invalid parameter, keyword = OUT_STATIONS_DUPLICATED.");
     }
 	bool saveSurf = par.getValue<bool>("OUT_STATIONS_WHOLE_SURFACE");
+	bool saveWvf = par.getValue<bool>("OUTPUT_WAVEFIELD");
+
     rec = new ReceiverCollection(recFile, geographic, srcLat, srcLon, srcDep, 
-		duplicated, saveSurf); 
+		duplicated, saveSurf, saveWvf); 
     
     // options 
     rec->mRecordInterval = par.getValue<int>("OUT_STATIONS_RECORD_INTERVAL");
     if (rec->mRecordInterval <= 0) {
         rec->mRecordInterval = 1;
     }
+	rec->mRecordIntervalWvf = par.getValue<int>("WAVEFIELD_RECORD_INTERVAL");
+	if (rec->mRecordIntervalWvf <= 0) {
+		rec->mRecordIntervalWvf = 1;
+	}
     rec->mTotalRecordSteps = totalStepsSTF / rec->mRecordInterval;
     if (totalStepsSTF % rec->mRecordInterval > 0) {
         rec->mTotalRecordSteps += 1;
     }
+	
+	rec->mTotalRecordStepsWvf = totalStepsSTF / rec->mRecordIntervalWvf;
+	if (totalStepsSTF % rec->mRecordIntervalWvf > 0) {
+		rec->mTotalRecordStepsWvf += 1;
+	}
+	rec->mRmin = par.getValue<double>("RMIN")*1e3;
+	rec->mRmax = par.getValue<double>("RMAX")*1e3;
+	rec->mThetaMin = par.getValue<double>("THETA_MIN")*degree;
+	rec->mThetaMax = par.getValue<double>("THETA_MAX")*degree;
+
     rec->mBufferSize = par.getValue<int>("OUT_STATIONS_DUMP_INTERVAL");
     if (rec->mBufferSize <= 0) {
         rec->mBufferSize = 1000;
@@ -228,6 +260,13 @@ void ReceiverCollection::buildInparam(ReceiverCollection *&rec, const Parameters
     if (rec->mBufferSize > rec->mTotalRecordSteps) {
         rec->mBufferSize = rec->mTotalRecordSteps;
     }
+	rec->mBufferSizeWvf = par.getValue<int>("WAVEFIELD_DUMP_INTERVAL");
+	if (rec->mBufferSizeWvf <= 0) {
+		rec->mBufferSizeWvf = 10;
+	}
+	if (rec->mBufferSizeWvf > rec->mTotalRecordStepsWvf) {
+		rec->mBufferSizeWvf = rec->mTotalRecordStepsWvf;
+	}
     std::string strcomp = par.getValue<std::string>("OUT_STATIONS_COMPONENTS");
     if (boost::iequals(strcomp, "RTZ")) {
         rec->mComponents = "RTZ";

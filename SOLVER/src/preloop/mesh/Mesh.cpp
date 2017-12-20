@@ -87,7 +87,7 @@ mExModel(exModel), mNrField(nrf), mSrcLat(srcLat), mSrcLon(srcLon), mSrcDep(srcD
     }
 	
 	// mesh dumps 
-	std::string fname = Parameters::sOutputDirectory + "/animations/animation_db.nc4";
+	std::string fname = Parameters::sOutputDirectory + "/wavefields/wavefield_db.nc4";
 	mMeshIO = new MeshIO(this, fname);
 	mDump = 1;
 }

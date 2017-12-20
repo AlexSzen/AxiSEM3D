@@ -187,6 +187,15 @@ void Connectivity::decompose(const DecomposeOption &option,
         }
     } 
     MultilevelTimer::end("Global-to-local Element", 3);
+	
+	// local element and point to global point 
+	MultilevelTimer::begin("Local-element-to-global-point", 3);
+	std::vector<IMatPP> locElemToGlobPoint;
+	for (int ielem = 0; ielem < nElemGlobal; ielem++) 
+		if (elemToProc(ielem) == XMPI::rank())
+			locElemToGlobPoint.push_back(elemToGllGlobal[ielem]);
+	MultilevelTimer::end("Local-element-to-global-point", 3);
+
     
     // local element-gll mapping
     MultilevelTimer::begin("Local Element-Gll", 3);
@@ -217,6 +226,8 @@ void Connectivity::decompose(const DecomposeOption &option,
     MPI_Request req;
     msgInfo.mReqSend = std::vector<MPI_Request>(msgInfo.mNProcComm, req);
     msgInfo.mReqRecv = std::vector<MPI_Request>(msgInfo.mNProcComm, req);
+	msgInfo.mLocElemToGlobPoints = locElemToGlobPoint;
+	msgInfo.mElemToProc = elemToProc;
     MultilevelTimer::end("Local Messaging", 3);
 }
 

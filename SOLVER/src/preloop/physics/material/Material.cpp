@@ -250,18 +250,22 @@ arPP_RDColX Material::computeElementalMass() const {
 Acoustic *Material::createAcoustic(bool elem1D) const {
     const RDRowN &iFact = mMyQuad->getIntegralFactor();
     RDMatXN fluidK = mRho3D.array().pow(-1.);
+	RDMatXN fluidK_noquad = mRho3D.array().pow(-1.); // if we don't do quadrature we don't need integral factor.
     for (int ipnt = 0; ipnt < nPntElem; ipnt++) {
        fluidK.col(ipnt) *= iFact(ipnt);
     }
     if (mMyQuad->hasRelabelling()) {
         fluidK.array() *= mMyQuad->getRelabelling().getStiffJacobian().array();
+		fluidK_noquad.array() *= mMyQuad->getRelabelling().getStiffJacobian().array(); //check with kuangdai for particle relabelling.
     }
     if (elem1D) {
-        RDMatPP kstruct;
+        RDMatPP kstruct, kstruct_noquad;
         XMath::structuredUseFirstRow(fluidK, kstruct);
-        return new Acoustic1D(kstruct.cast<Real>());
+		XMath::structuredUseFirstRow(fluidK_noquad, kstruct_noquad);
+
+        return new Acoustic1D(kstruct.cast<Real>(), kstruct_noquad.cast<Real>());
     } else {
-        return new Acoustic3D(fluidK.cast<Real>());
+        return new Acoustic3D(fluidK.cast<Real>(), fluidK_noquad.cast<Real>());
     }
 }
 

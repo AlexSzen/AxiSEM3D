@@ -55,7 +55,8 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	// ---------- <GET FIELDS> ----------	
 	std::vector<int> NusAni(elems_proc,0); 
 	std::vector<int> NrsAni(elems_proc,0);
-
+	std::vector<int> Nus(elems_proc,0); 
+	std::vector<int> Nrs(elems_proc,0);
 	vec_RMatPP mesh_S(elems_proc, RMatPP::Zero());
 	vec_RMatPP mesh_Z(elems_proc, RMatPP::Zero());
 	
@@ -66,14 +67,18 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	vec2_RMatXX_RM mesh_vp_ani;
 	vec2_RMatXX_RM mesh_vs_ani;
 	
+	vec_ar2_RMatPP mesh_vp, mesh_vs;
+	
 	for (int i=0; i<elems_proc; i++) {
 		
 		Element* elem = domain.getElement(i);
 		Quad* quad = mMesh->mQuads[i];
 		 
-		if (elem->needDumping(rmin,rmax,tmin,tmax)) {
+		if (elem->needDumping(rmin,rmax,tmin,tmax)) { //for now keep the flexible dumping even for wavefields for kernels
       	NusAni[i] = elem->getMaxNu()+1;
       	NrsAni[i] = elem->getMaxNr();
+		Nus[i] = elem->getMaxNu()+1;
+		Nrs[i] = elem->getMaxNr();
 		
 		vec_CMatPP vp_elem = quad->getMaterialFourier("vp", SlicePlot::PropertyRefTypes::Property3D);
 		vec_CMatPP vs_elem = quad->getMaterialFourier("vs", SlicePlot::PropertyRefTypes::Property3D);
@@ -87,12 +92,23 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 			mesh_vs_ani.push_back(zero_ar2_matAni);		
 			(mesh_vs_ani.back())[0] = vs_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).real();
 			(mesh_vs_ani.back())[1] = vs_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).imag();
+			
+			mesh_vp.push_back(zero_ar2_RMatPP);
+			(mesh_vp.back())[0] = vp_elem[ialpha].real();
+			(mesh_vp.back())[1] = vp_elem[ialpha].imag();
+			
+			mesh_vs.push_back(zero_ar2_RMatPP);
+			(mesh_vs.back())[0] = vs_elem[ialpha].real();
+			(mesh_vs.back())[1] = vs_elem[ialpha].imag();
+
 
 		}
 		
 	    } else {
 		NusAni[i] = 0;
 		NrsAni[i] = 0;
+		Nus[i] = 0; 
+		Nrs[i] = 0;
 		}
 		
 		// coords 
@@ -205,12 +221,17 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	nc_writer.defModeOn();
 	nc_writer.defineVariable<int>("Nus", dimsElem);
 	nc_writer.defineVariable<int>("Nrs", dimsElem);
+	nc_writer.defineVariable<int>("domain_decomposition", dimsElem);
+	nc_writer.defineVariable<int>("sem_mesh", dimsElemGll);
 	nc_writer.defineVariable<Real>("mesh_S", dimsElemGll);
 	nc_writer.defineVariable<Real>("mesh_Z", dimsElemGll);
-	nc_writer.defineVariable<Real>("mesh_vp", dimsElemNuGll_ani);
-	nc_writer.defineVariable<Real>("mesh_vs", dimsElemNuGll_ani);
+	nc_writer.defineVariable<Real>("mesh_vp", dimsElemNuGll);
+	nc_writer.defineVariable<Real>("mesh_vs", dimsElemNuGll);
 
 	nc_writer.defModeOff();
+	
+	nc_writer.writeVariableWhole("domain_decomposition", mMesh->mMsgInfo->mElemToProc);
+	
 	nc_writer.close();
 	}
 	// ---------- </DEFINE NETCDF FILE> ----------
@@ -234,12 +255,13 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	//  parallel NetCDF required
 	nc_writer.openParallel(mFileName);
 
-	nc_writer.writeVariableChunk("Nus", NusAni, startElem, countElem);
-	nc_writer.writeVariableChunk("Nrs", NrsAni, startElem, countElem);
+	nc_writer.writeVariableChunk("Nus", Nus, startElem, countElem);
+	nc_writer.writeVariableChunk("Nrs", Nrs, startElem, countElem);
+	nc_writer.writeVariableChunk("sem_mesh", mMesh->mMsgInfo->mLocElemToGlobPoints, startElemGll, countElemGll);
 	nc_writer.writeVariableChunk("mesh_S", mesh_S, startElemGll, countElemGll);
 	nc_writer.writeVariableChunk("mesh_Z", mesh_Z, startElemGll, countElemGll);
-	nc_writer.writeVariableChunk("mesh_vp", test_vec, startElemNuGll_ani, countElemNuGll_ani);
-	nc_writer.writeVariableChunk("mesh_vs", test_ar, startElemNuGll_ani, countElemNuGll_ani);
+	nc_writer.writeVariableChunk("mesh_vp", mesh_vp, startElemNuGll, countElemNuGll);
+	nc_writer.writeVariableChunk("mesh_vs", mesh_vs, startElemNuGll, countElemNuGll);
 
 
 	nc_writer.close();

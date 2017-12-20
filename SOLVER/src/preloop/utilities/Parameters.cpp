@@ -79,6 +79,9 @@ void Parameters::registerAll() {
     registerPar("OUT_STATIONS_RECORD_INTERVAL");
     registerPar("OUT_STATIONS_DUMP_INTERVAL");
 	registerPar("OUT_STATIONS_WHOLE_SURFACE");
+	registerPar("OUTPUT_WAVEFIELD");
+	registerPar("WAVEFIELD_RECORD_INTERVAL");
+	registerPar("WAVEFIELD_DUMP_INTERVAL");
 	registerPar("ANIMATION");
 	registerPar("RMIN");
 	registerPar("RMAX");

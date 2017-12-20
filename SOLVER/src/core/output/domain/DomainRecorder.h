@@ -1,17 +1,23 @@
 // Alex 
 // Recorder for domain wide wavefields
+// rewritten for kuangdai's implementation
 
 #pragma once 
 
-#include 
+#include "eigenc.h"
+
+class DomainIO;
+class DomainInfo;
+class Element;
 
 class DomainRecorder{
 	
 public:
 	
-	DomainRecorder();
+	DomainRecorder(int totalRecordSteps, int recordInterval, int bufferSize);
 	~DomainRecorder();
 	
+	void addElement(const Element* elem);
 	// before time loop
     void initialize();
 
@@ -26,8 +32,20 @@ public:
 
 private:
 	
-	DomainIO* mIOinv; //dumps wavefields for inversion
-	DomainIO* mIOani; //dumps wavefields for animation
+	DomainIO* mIO; //dumps wavefields for inversion
+	
+	std::vector<DomainInfo> mDomainInfo;
+	
+	// interval
+	int mTotalRecordSteps;
+	int mRecordInterval;
+
+	// buffer
+	int mBufferSize;
+	int mBufferLineNu;
+	int mBufferLineTime;
+	vec_vec_ar6_RMatPP mBufferDisp;
+	RColX mBufferTime;
 	
 	
 	
