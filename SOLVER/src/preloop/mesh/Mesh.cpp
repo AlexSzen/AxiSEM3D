@@ -87,9 +87,10 @@ mExModel(exModel), mNrField(nrf), mSrcLat(srcLat), mSrcLon(srcLon), mSrcDep(srcD
     }
 	
 	// mesh dumps 
+	mDump = par.getValue<bool>("OUTPUT_WAVEFIELD");
 	std::string fname = Parameters::sOutputDirectory + "/wavefields/wavefield_db.nc4";
 	mMeshIO = new MeshIO(this, fname);
-	mDump = 1;
+	
 }
 
 void Mesh::buildUnweighted() {

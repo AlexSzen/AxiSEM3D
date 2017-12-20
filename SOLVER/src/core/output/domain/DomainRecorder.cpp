@@ -24,12 +24,11 @@ void DomainRecorder::addElement(const Element* elem) {
 
 void DomainRecorder::initialize() {
 	
-	int numElem = mDomainInfo.size();
 	
 	mBufferTime = RColX::Zero(mBufferSize);
 
 	int totNu = 0;
-	for (int ielem = 0; ielem < numElem; ielem++) {
+	for (int ielem = 0; ielem < mDomainInfo.size(); ielem++) {
 		totNu += mDomainInfo[ielem].getMaxNu() + 1;
 	}
 	vec_ar6_RMatPP initBuf(totNu, zero_ar6_RMatPP);

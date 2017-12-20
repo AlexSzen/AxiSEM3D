@@ -216,7 +216,7 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	dimsElemNuGll_ani.push_back(gll_ani);
 	dimsElemNuGll_ani.push_back(gll_ani);
 
-	// animation 	
+
 	nc_writer.open(mFileName,true);	
 	nc_writer.defModeOn();
 	nc_writer.defineVariable<int>("Nus", dimsElem);
