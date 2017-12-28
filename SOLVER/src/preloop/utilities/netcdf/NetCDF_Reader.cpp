@@ -78,6 +78,38 @@ void NetCDF_Reader::readString(const std::string &vname, std::vector<std::string
     delete [] cstr;
 }
 
+void NetCDF_Reader::getVarDimensions(const std::string &vname, std::vector<size_t> &dims) const {
+	
+	// access variable
+	int var_id = -1;
+	if (nc_inq_varid(mFileID, vname.c_str(), &var_id) != NC_NOERR) {
+		throw std::runtime_error("NetCDF_Reader::getVarDimensions || "
+			"Error finding variable: " + vname + " || NetCDF file: " + mFileName);
+	}
+	
+	// get ndims
+	int var_ndims = -1;
+	netcdfError(nc_inq_varndims(mFileID, var_id, &var_ndims), "nc_inq_varndims");
+	
+	// get dim length
+	std::vector<int> var_dimids(var_ndims, -1);
+	netcdfError(nc_inq_vardimid(mFileID, var_id, var_dimids.data()), "nc_inq_vardimid");
+	dims.resize(var_ndims);
+	size_t total_len = 1;
+	for (int i = 0; i < var_ndims; i++) {
+		netcdfError(nc_inq_dimlen(mFileID, var_dimids[i], &dims[i]), "nc_inq_dimlen");
+	}
+}
+
+int NetCDF_Reader::inquireVariable(const std::string &vname) const {
+    int var_id = -1;
+    if (nc_inq_varid(mFileID, vname.c_str(), &var_id) != NC_NOERR) {
+        throw std::runtime_error("NetCDF_Reader::inquireVariable || "
+            "Error finding variable: " + vname + " || NetCDF file: " + mFileName);
+    }
+    return var_id;
+}
+
 bool NetCDF_Reader::isNetCDF(const std::string &fname) {
     int fid, stat;
     stat = nc_open(fname.c_str(), 0, &fid);

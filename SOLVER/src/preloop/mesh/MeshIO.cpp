@@ -10,6 +10,7 @@
 #include "XMPI.h"
 #include "SlicePlot.h"
 #include "Quad.h"
+#include <iostream>
 
 MeshIO::MeshIO(const Mesh *mesh, const std::string &fname): mMesh(mesh), mFileName(fname) {
 	//nothing
@@ -38,7 +39,7 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	int elems_proc_ani = 0, elemNus_proc = 0, elemNus_proc_ani = 0;
 
 	for (int i = 0; i < elems_proc; i++) {
-		int maxNu = domain.getElement(i)->getMaxNu() + 1;
+		int maxNu = mMesh->getQuad(i)->getNu() + 1;
 		elemNus_proc += maxNu;
 		if (domain.getElement(i)->needDumping(rmin,rmax,tmin,tmax)) {
 			elems_proc_ani++;
@@ -64,11 +65,11 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	zero_matAni.setZero();	
 	vec_RMatXX_RM zero_ar2_matAni(2,zero_matAni);
 	
-	vec2_RMatXX_RM mesh_vp_ani;
-	vec2_RMatXX_RM mesh_vs_ani;
+	//vec2_RMatXX_RM mesh_vp_ani;
+	//vec2_RMatXX_RM mesh_vs_ani;
 	
-	vec_ar2_RMatPP mesh_vp, mesh_vs;
-	
+	//vec_ar2_RMatPP mesh_vp, mesh_vs;
+	vec_ar12_RMatPP materials;
 	for (int i=0; i<elems_proc; i++) {
 		
 		Element* elem = domain.getElement(i);
@@ -80,26 +81,58 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 		Nus[i] = elem->getMaxNu()+1;
 		Nrs[i] = elem->getMaxNr();
 		
-		vec_CMatPP vp_elem = quad->getMaterialFourier("vp", SlicePlot::PropertyRefTypes::Property3D);
-		vec_CMatPP vs_elem = quad->getMaterialFourier("vs", SlicePlot::PropertyRefTypes::Property3D);
+		vec_CMatPP vph_elem = quad->getMaterialFourier("vph", SlicePlot::PropertyRefTypes::Property3D);
+		vec_CMatPP vpv_elem = quad->getMaterialFourier("vpv", SlicePlot::PropertyRefTypes::Property3D);		
+		vec_CMatPP vsh_elem = quad->getMaterialFourier("vsh", SlicePlot::PropertyRefTypes::Property3D);
+		vec_CMatPP vsv_elem = quad->getMaterialFourier("vsv", SlicePlot::PropertyRefTypes::Property3D);
+		vec_CMatPP rho_elem = quad->getMaterialFourier("rho", SlicePlot::PropertyRefTypes::Property3D);
+		vec_CMatPP eta_elem = quad->getMaterialFourier("eta", SlicePlot::PropertyRefTypes::Property3D);
 
-		for (int ialpha=0; ialpha<vp_elem.size(); ialpha++) {
+
+		for (int ialpha=0; ialpha<Nus[i]; ialpha++) { //i assume materials have this expansion order..? they are padded to it anw for kernel computation 
 			
-			mesh_vp_ani.push_back(zero_ar2_matAni);		
+		/*	mesh_vp_ani.push_back(zero_ar2_matAni);		
 			(mesh_vp_ani.back())[0] = vp_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).real();
 			(mesh_vp_ani.back())[1] = vp_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).imag();
 
 			mesh_vs_ani.push_back(zero_ar2_matAni);		
 			(mesh_vs_ani.back())[0] = vs_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).real();
 			(mesh_vs_ani.back())[1] = vs_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).imag();
+			*/
 			
-			mesh_vp.push_back(zero_ar2_RMatPP);
+			materials.push_back(zero_ar12_RMatPP);
+			
+			if (ialpha<rho_elem.size()) {
+				materials.back()[0] = rho_elem[ialpha].real();
+				materials.back()[1] = rho_elem[ialpha].imag();
+			}
+			if (ialpha<vph_elem.size()) {
+				materials.back()[2] = vph_elem[ialpha].real();
+				materials.back()[3] = vph_elem[ialpha].imag();
+			}
+			if (ialpha<vpv_elem.size()) {
+				materials.back()[4] = vpv_elem[ialpha].real();
+				materials.back()[5] = vpv_elem[ialpha].imag();
+			}
+			if (ialpha<vsh_elem.size()) {
+				materials.back()[6] = vsh_elem[ialpha].real();
+				materials.back()[7] = vsh_elem[ialpha].imag();
+			}
+			if (ialpha<vsv_elem.size()) {
+				materials.back()[8] = vsv_elem[ialpha].real();
+				materials.back()[9] = vsv_elem[ialpha].imag();
+			}
+			if (ialpha<eta_elem.size()) {
+				materials.back()[10] = eta_elem[ialpha].real();
+				materials.back()[11] = eta_elem[ialpha].imag();
+			}
+	/*		mesh_vp.push_back(zero_ar2_RMatPP);
 			(mesh_vp.back())[0] = vp_elem[ialpha].real();
 			(mesh_vp.back())[1] = vp_elem[ialpha].imag();
 			
 			mesh_vs.push_back(zero_ar2_RMatPP);
 			(mesh_vs.back())[0] = vs_elem[ialpha].real();
-			(mesh_vs.back())[1] = vs_elem[ialpha].imag();
+			(mesh_vs.back())[1] = vs_elem[ialpha].imag();*/
 
 
 		}
@@ -149,7 +182,7 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	startElemNuGll.push_back(temp_startElemNu);
 	countElemNuGll.push_back(temp_countElemNu[XMPI::rank()]);
 	startElemNuGll.push_back(0);
-	countElemNuGll.push_back(2);
+	countElemNuGll.push_back(12); //real/imag for each of the 6 material fields 
 	startElemNuGll.push_back(0);
 	countElemNuGll.push_back(nPntEdge);
 	startElemNuGll.push_back(0);
@@ -182,7 +215,7 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	startElemNuGll_ani.push_back(temp_startElemNu_ani);
 	countElemNuGll_ani.push_back(temp_countElemNu_ani[XMPI::rank()]);
 	startElemNuGll_ani.push_back(0);
-	countElemNuGll_ani.push_back(2);
+	countElemNuGll_ani.push_back(12);
 	startElemNuGll_ani.push_back(0);
 	countElemNuGll_ani.push_back(gll_ani);
 	startElemNuGll_ani.push_back(0);
@@ -201,7 +234,7 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	dimsElemGll.push_back(nPntEdge);
 	dimsElemGll.push_back(nPntEdge);	
 	dimsElemNuGll.push_back(elemNus_all);
-	dimsElemNuGll.push_back(2); // real/imag
+	dimsElemNuGll.push_back(12); // real/imag for each of the 6 material fields 
 	dimsElemNuGll.push_back(nPntEdge);
 	dimsElemNuGll.push_back(nPntEdge);
 	
@@ -212,7 +245,7 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	dimsElemGll_ani.push_back(gll_ani);
 	dimsElemGll_ani.push_back(gll_ani);
 	dimsElemNuGll_ani.push_back(elemNus_all);
-	dimsElemNuGll_ani.push_back(2);
+	dimsElemNuGll_ani.push_back(12);
 	dimsElemNuGll_ani.push_back(gll_ani);
 	dimsElemNuGll_ani.push_back(gll_ani);
 
@@ -225,8 +258,8 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	nc_writer.defineVariable<int>("sem_mesh", dimsElemGll);
 	nc_writer.defineVariable<Real>("mesh_S", dimsElemGll);
 	nc_writer.defineVariable<Real>("mesh_Z", dimsElemGll);
-	nc_writer.defineVariable<Real>("mesh_vp", dimsElemNuGll);
-	nc_writer.defineVariable<Real>("mesh_vs", dimsElemNuGll);
+	nc_writer.defineVariable<Real>("material_fields", dimsElemNuGll);
+
 
 	nc_writer.defModeOff();
 	
@@ -260,8 +293,8 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	nc_writer.writeVariableChunk("sem_mesh", mMesh->mMsgInfo->mLocElemToGlobPoints, startElemGll, countElemGll);
 	nc_writer.writeVariableChunk("mesh_S", mesh_S, startElemGll, countElemGll);
 	nc_writer.writeVariableChunk("mesh_Z", mesh_Z, startElemGll, countElemGll);
-	nc_writer.writeVariableChunk("mesh_vp", mesh_vp, startElemNuGll, countElemNuGll);
-	nc_writer.writeVariableChunk("mesh_vs", mesh_vs, startElemNuGll, countElemNuGll);
+	nc_writer.writeVariableChunk("material_fields", materials, startElemNuGll, countElemNuGll);
+
 
 
 	nc_writer.close();

@@ -58,6 +58,7 @@ int axisem_main(int argc, char *argv[]) {
         Geometric3D::buildInparam(pl.mGeometric3D, *(pl.mParameters), verbose);
         OceanLoad3D::buildInparam(pl.mOceanLoad3D, *(pl.mParameters), verbose);
         MultilevelTimer::end("Build 3D Models", 0);
+		
         
         //////// mesh, phase 1
         // define mesh
@@ -121,6 +122,11 @@ int axisem_main(int argc, char *argv[]) {
         ReceiverCollection::buildInparam(pl.mReceivers, *(pl.mParameters), 
             srcLat, srcLon, srcDep, pl.mSTF->getSize(), verbose);
         MultilevelTimer::end("Build Receivers", 0);    
+		
+		//////// Kernels 
+		MultilevelTimer::begin("Build Kernels", 0);
+		Kernels::buildInparam(pl.mKernels, *(pl.mParameters), pl.mSTF->getSize(), verbose);
+		MultilevelTimer::end("Build Kernels", 0);
         
         //////// computational domain
         MultilevelTimer::begin("Computational Domain", 0);
@@ -139,8 +145,8 @@ int axisem_main(int argc, char *argv[]) {
         // release stf 
         MultilevelTimer::begin("Release STF", 1);
         pl.mSTF->release(*(sv.mDomain));
-        MultilevelTimer::end("Release STF", 1);
-        
+        MultilevelTimer::end("Release STF", 1);        
+
 		MultilevelTimer::begin("Dump mesh quantities",1);
 		pl.mMesh->dumpFields(*(sv.mDomain), *(pl.mSource),*(pl.mParameters));
 		MultilevelTimer::end("Dump mesh quantities",1);
@@ -149,6 +155,12 @@ int axisem_main(int argc, char *argv[]) {
         pl.mReceivers->release(*(sv.mDomain), *(pl.mMesh));
         sv.mDomain->initializeRecorders();
         MultilevelTimer::end("Release Receivers", 1);
+		
+		//release kernels
+		MultilevelTimer::begin("Release Kerner", 1);
+		pl.mKernels->release(*(sv.mDomain), *(pl.mMesh));
+		sv.mDomain->initializeKerner();
+		MultilevelTimer::end("Release Kerner", 1);
         
         // verbose domain 
         MultilevelTimer::begin("Verbose", 1);
@@ -179,9 +191,13 @@ int axisem_main(int argc, char *argv[]) {
         XMPI::barrier();
         sv.mNewmark->solve(verbose);
         
+		/////// compute kernels 
+		sv.mDomain->computeKernels();
+		
         //////// finalize solver
         // solver 
-        sv.mDomain->finalizeRecorders();
+        sv.mDomain->finalizeKerner();
+		sv.mDomain->finalizeRecorders();
         sv.finalize();
         // static variables in solver
         finalizeSolverStatic();

@@ -136,7 +136,8 @@ private:
         int mProcInterval;
         int mNCutsPerProc;
     } *mDDPar;
-    
+    bool mFwdDD; // if computing kernels reuse DD of fwd simulation 
+	
     ////////////////// wisdom learning //////////////////
     LearnParameters *mLearnPar;
     
@@ -149,6 +150,8 @@ private:
 	////////////////// dump various fields for animation and kernels ////////////////////////
 	MeshIO *mMeshIO;
 	bool mDump; //whether to dump or not
+	
+	
 };
 
 

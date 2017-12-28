@@ -12,6 +12,7 @@ struct DecomposeOption {
     double mImbalance = 0.01;
     int mProcInterval = 1;
     int mNCutsPerProc = 1;
+	bool mFwdDD = false; // add option to use fwd DD. only activate in build weighted
 };
 
 class DualGraph {

@@ -138,7 +138,7 @@ include_directories(
     src/core/output/domain
     src/core/domain
     src/core/newmark
-
+    src/core/Kernels
     ############################## preloop ##############################
     src/preloop
     src/preloop/utilities
@@ -159,8 +159,10 @@ include_directories(
 
     src/preloop/source
     src/preloop/source/stf
-	src/preloop/source/offaxis
+    src/preloop/source/offaxis
     src/preloop/receiver
+
+    src/preloop/kernels
 
     src/3d_model/3d_volumetric
     src/3d_model/3d_volumetric/s20_s40rts
@@ -246,6 +248,9 @@ add_executable(
     src/core/domain/Domain.cpp
     src/core/newmark/Newmark.cpp
 
+    src/core/Kernels/Kerner.cpp
+    src/core/Kernels/KernerElement.cpp
+    src/core/Kernels/KernerIO.cpp
     ############################## preloop ##############################
     src/preloop/utilities/XMath.cpp
     src/preloop/utilities/Geodesy.cpp
@@ -300,6 +305,8 @@ add_executable(
 	src/preloop/source/offaxis/OffAxisPointForce.cpp
     src/preloop/receiver/Receiver.cpp
     src/preloop/receiver/ReceiverCollection.cpp
+    
+    src/preloop/kernels/Kernels.cpp
 
     src/3d_model/3d_volumetric/Volumetric3D.cpp
     src/3d_model/3d_volumetric/s20_s40rts/s20rts.f90

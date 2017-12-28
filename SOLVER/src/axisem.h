@@ -20,7 +20,7 @@
 #include "AttBuilder.h"
 #include "STF.h"
 #include "ReceiverCollection.h"
-
+#include "Kernels.h"
 // solver
 #include "Domain.h"
 #include "Newmark.h"
@@ -38,6 +38,7 @@ struct PreloopVariables {
     AttBuilder *mAttBuilder = 0;
     STF *mSTF = 0;
     ReceiverCollection *mReceivers = 0;
+	Kernels *mKernels = 0;
     
     // finalizer 
     void finalize() {
@@ -55,6 +56,7 @@ struct PreloopVariables {
         if (mAttBuilder) {delete mAttBuilder; mAttBuilder = 0;}
         if (mSTF) {delete mSTF; mSTF = 0;}
         if (mReceivers) {delete mReceivers; mReceivers = 0;}
+		if (mKernels) {delete mKernels; mKernels = 0;}
     };
 };
 

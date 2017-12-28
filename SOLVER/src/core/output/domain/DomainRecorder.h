@@ -11,10 +11,12 @@ class DomainInfo;
 class Element;
 
 class DomainRecorder{
-	
+
+friend class Kerner; //to allow usage of mBufferDisp. 
+
 public:
 	
-	DomainRecorder(int totalRecordSteps, int recordInterval, int bufferSize);
+	DomainRecorder(int totalRecordSteps, int recordInterval, int bufferSize, bool write);
 	~DomainRecorder();
 	
 	void addElement(const Element* elem);
@@ -29,7 +31,7 @@ public:
 
     // dump to netcdf
     void dumpToFile();
-
+	
 private:
 	
 	DomainIO* mIO; //dumps wavefields for inversion
@@ -46,6 +48,10 @@ private:
 	int mBufferLineTime;
 	vec_vec_ar6_RMatPP mBufferDisp;
 	RColX mBufferTime;
+	
+	// write file or just keep in ram 
+	bool mWrite;
+	
 	
 	
 	

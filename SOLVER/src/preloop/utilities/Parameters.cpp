@@ -18,6 +18,8 @@ void Parameters::initReadBcast() {
     readParFile(Parameters::sInputDirectory + "/inparam.nu");
     readParFile(Parameters::sInputDirectory + "/inparam.time_src_recv");
     readParFile(Parameters::sInputDirectory + "/inparam.advanced");
+	readParFile(Parameters::sInputDirectory + "/inparam.inverse");
+
 }
 
 void Parameters::registerAll() {
@@ -88,7 +90,6 @@ void Parameters::registerAll() {
 	registerPar("THETA_MIN");
 	registerPar("THETA_MAX");
 	registerPar("GLL_ANIMATION");
-    
     // inparam.advanced
     registerPar("ATTENUATION_CG4");
     registerPar("ATTENUATION_SPECFEM_LEGACY");
@@ -103,7 +104,18 @@ void Parameters::registerAll() {
     registerPar("DEVELOP_DIAGNOSE_PRELOOP");
     registerPar("DEVELOP_MEASURED_COSTS");
     registerPar("DEVELOP_DISABLE_FFTW_WISDOM");
-    
+	
+	// inparam.inverse
+	registerPar("COMPUTE_KERNELS");
+	registerPar("KERNEL_TYPES");
+	registerPar("FILTER_TYPE");
+	registerPar("CENTER_FREQ");
+    registerPar("SIGMA");
+	registerPar("TAPER_TYPE");
+	registerPar("OUTPUT_TIME_KERNELS");
+	registerPar("BEG_WINDOW");
+	registerPar("END_WINDOW");
+	
 }
 
 void Parameters::parseLine(const std::string &line) {

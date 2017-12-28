@@ -5,9 +5,9 @@
 #include "DomainIO.h"
 #include "DomainInfo.h"
 
-DomainRecorder::DomainRecorder(int totalRecordSteps, int recordInterval, int bufferSize): 
+DomainRecorder::DomainRecorder(int totalRecordSteps, int recordInterval, int bufferSize, bool write): 
 mTotalRecordSteps(totalRecordSteps),
-mRecordInterval(recordInterval), mBufferSize(bufferSize) {
+mRecordInterval(recordInterval), mBufferSize(bufferSize), mWrite(write) {
 	mBufferLineTime = 0;
 	mBufferLineNu = 0;
 	mIO = new DomainIO();
@@ -65,6 +65,7 @@ void DomainRecorder::record(int tstep, Real t) {
 }
 
 void DomainRecorder::dumpToFile() {
-	mIO->dumpToFile(mBufferDisp, mBufferTime, mBufferLineTime);
+	if (mWrite)
+		mIO->dumpToFile(mBufferDisp, mBufferTime, mBufferLineTime);
 	mBufferLineTime = 0;
 }

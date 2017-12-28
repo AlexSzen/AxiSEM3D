@@ -9,7 +9,6 @@
 
 void DomainIO::initialize(int totalRecordSteps, int recordInterval, int bufferSize, int totNuProc) {
 	
-	bufferSize = bufferSize;
 	mNetCDF = new NetCDF_Writer();
 	std::string fname = Parameters::sOutputDirectory + "/wavefields/wavefield_db.nc4";
 	

@@ -23,9 +23,11 @@
 #include "Element.h"
 
 ReceiverCollection::ReceiverCollection(const std::string &fileRec, bool geographic, 
-    double srcLat, double srcLon, double srcDep, int duplicated, bool saveSurf, bool saveWvf):
+    double srcLat, double srcLon, double srcDep, int duplicated, bool saveSurf, bool saveWvf, bool computeKernels):
 mInputFile(fileRec), mGeographic(geographic), mSaveWholeSurface(saveSurf),
-mSrcLat(srcLat), mSrcLon(srcLon), mSrcDep(srcDep), mSaveWavefieldDomain(saveWvf){
+mSrcLat(srcLat), mSrcLon(srcLon), mSrcDep(srcDep), mSaveWavefieldDomain(saveWvf),
+mComputeKernels(computeKernels)
+{
     std::vector<std::string> name, network;
     std::vector<double> theta, phi, depth;
 	if (!boost::iequals(fileRec, "none")) {
@@ -158,8 +160,26 @@ void ReceiverCollection::release(Domain &domain, const Mesh &mesh) {
 		domain.setSurfaceRecorder(recorderSF);
 	}
 	
-	if (mSaveWavefieldDomain) {
-		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mBufferSizeWvf);
+	if (mSaveWavefieldDomain && !mComputeKernels) {
+		
+		bool write = true;
+		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mBufferSizeWvf, write);
+		for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {
+			Element *elem = domain.getElement(ielem);
+			if ( elem->needDumping(mRmin,mRmax,mThetaMin,mThetaMax) ) {
+				recorderDM->addElement(elem);
+			}
+		}
+		domain.setDomainRecorder(recorderDM);
+	} 
+	
+	if (mComputeKernels) {
+		
+		bool write = false;
+		if (mSaveWavefieldDomain) write = true;
+		
+		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mTotalRecordStepsWvf, write);
+		
 		for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {
 			Element *elem = domain.getElement(ielem);
 			if ( elem->needDumping(mRmin,mRmax,mThetaMin,mThetaMax) ) {
@@ -226,9 +246,9 @@ void ReceiverCollection::buildInparam(ReceiverCollection *&rec, const Parameters
     }
 	bool saveSurf = par.getValue<bool>("OUT_STATIONS_WHOLE_SURFACE");
 	bool saveWvf = par.getValue<bool>("OUTPUT_WAVEFIELD");
-
+	bool computeKernels = par.getValue<bool>("COMPUTE_KERNELS");
     rec = new ReceiverCollection(recFile, geographic, srcLat, srcLon, srcDep, 
-		duplicated, saveSurf, saveWvf); 
+		duplicated, saveSurf, saveWvf, computeKernels); 
     
     // options 
     rec->mRecordInterval = par.getValue<int>("OUT_STATIONS_RECORD_INTERVAL");

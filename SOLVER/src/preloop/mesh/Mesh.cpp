@@ -44,7 +44,8 @@ mExModel(exModel), mNrField(nrf), mSrcLat(srcLat), mSrcLon(srcLon), mSrcDep(srcD
     mOceanLoad3D = 0;
     mDDPar = new DDParameters(par);
     mLearnPar = new LearnParameters(par);
-    
+	mFwdDD = par.getValue<bool>("COMPUTE_KERNELS");
+
     // 2D mode
     std::string mode2d = par.getValue<std::string>("MODEL_2D_MODE");
     if (boost::iequals(mode2d, "off")) {
@@ -132,6 +133,7 @@ void Mesh::buildWeighted() {
     DecomposeOption measured;
     measured.mProcInterval = mDDPar->mProcInterval;
     measured.mNCutsPerProc = mDDPar->mNCutsPerProc;
+	measured.mFwdDD = mFwdDD;
     MultilevelTimer::begin("Measure", 1);
     measure(measured);
     MultilevelTimer::end("Measure", 1);

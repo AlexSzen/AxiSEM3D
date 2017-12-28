@@ -14,6 +14,7 @@
 #include "XMPI.h"
 #include "NuWisdom.h"
 #include "MultilevelTimer.h"
+#include "Kerner.h"
 
 Domain::Domain() {
     #ifdef _MEASURE_TIMELOOP
@@ -31,10 +32,12 @@ Domain::~Domain() {
     for (const auto &e: mSourceTerms) {delete e;}
     if (mPointwiseRecorder) {delete mPointwiseRecorder;};
 	if (mSurfaceRecorder) {delete mSurfaceRecorder;};
+	if (mDomainRecorder) {delete mDomainRecorder;};
     if (mSTF) {delete mSTF;}
     if (mMsgInfo) {delete mMsgInfo;}
     if (mMsgBuffer) {delete mMsgBuffer;}
     if (mLearnPar) {delete mLearnPar;}
+	if (mKerner) {delete mKerner;}
     #ifdef _MEASURE_TIMELOOP
         delete mTimerElemts;
         delete mTimerPoints;
@@ -237,6 +240,18 @@ void Domain::dumpLeft() const {
     #ifdef _MEASURE_TIMELOOP
         mTimerOthers->stop();
     #endif
+}
+
+void Domain::initializeKerner() {
+	if (mKerner) mKerner->initialize();
+}
+
+void Domain::finalizeKerner() {
+	if (mKerner) mKerner->finalize();
+}
+
+void Domain::computeKernels() {
+	if (mKerner) mKerner->computeKernels();
 }
 
 void Domain::checkStability(double dt, int tstep, double t) const {

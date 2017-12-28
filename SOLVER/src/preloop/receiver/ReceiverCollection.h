@@ -17,7 +17,7 @@ class ReceiverCollection {
 public:
     ReceiverCollection(const std::string &fileRec, bool geographic, 
         double srcLat, double srcLon, double srcDep, int duplicated, 
-		bool saveSurf, bool saveWvf);
+		bool saveSurf, bool saveWvf, bool computeKernels);
     ~ReceiverCollection();
     
     void release(Domain &domain, const Mesh &mesh); 
@@ -62,6 +62,8 @@ private:
 	// domain wavefield
 	bool mSaveWavefieldDomain;
 	
+	// compute kernels 
+	bool mComputeKernels;
 	// source location
 	double mSrcLat, mSrcLon, mSrcDep;
 };

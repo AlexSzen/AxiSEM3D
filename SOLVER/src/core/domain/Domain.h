@@ -21,6 +21,7 @@ class DomainRecorder;
 struct MessagingInfo;
 struct MessagingBuffer;
 struct LearnParameters;
+class Kerner;
 
 class Domain {
 public:
@@ -40,7 +41,7 @@ public:
         {mMsgInfo = msgInfo; mMsgBuffer = msgBuffer;};
     void addSFPoint(SolidFluidPoint *SFPoint) {mSFPoints.push_back(SFPoint);};
     void setLearnParameters(LearnParameters *lpar) {mLearnPar = lpar;};
-        
+    void setKerner(Kerner *kerner) {mKerner = kerner;};    
     // get const components
     const SourceTimeFunction &getSTF() const {return *mSTF;};
     int getNumPoints() const {return mPoints.size();};
@@ -50,6 +51,9 @@ public:
     Point *getPoint(int index) const {return mPoints[index];};
     Element *getElement(int index) const {return mElements[index];};
     // SourceTerm *getSourceTerm(int index) {return mSourceTerms[index];};
+
+	// get recorder for kernels 
+	DomainRecorder *getDomainRecorder() const {return mDomainRecorder;};
     
     // test domain 
     void test() const;
@@ -85,6 +89,11 @@ public:
     // wisdom
     void learnWisdom(int tstep) const;
     void dumpWisdom() const;
+	
+	// kernels 
+	void initializeKerner();
+	void finalizeKerner();
+	void computeKernels();
     
 private:
     bool pointInPreviousRank(int myPointTag) const;
@@ -105,6 +114,8 @@ private:
     SurfaceRecorder *mSurfaceRecorder = 0;
 	// domain wavefield
 	DomainRecorder *mDomainRecorder = 0;
+	// kernels 
+	Kerner *mKerner = 0;
     // massaging 
     MessagingInfo *mMsgInfo = 0;
     MessagingBuffer *mMsgBuffer = 0;

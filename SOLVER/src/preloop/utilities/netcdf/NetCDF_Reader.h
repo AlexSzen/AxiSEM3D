@@ -83,7 +83,25 @@ public:
             }
         }
     };
+	
+	// read chunk of a variable
+	// NOTE: if the Container is an Eigen Matrix, it has to be Eigen::RowMajor
+	template<class Container>   
+	void readVariableChunk(const std::string &vname, Container &data, 
+		std::vector<size_t> &start, std::vector<size_t> &count) const {
+		int varid = inquireVariable(vname);
+		if (data.size() > 0) {
+			if (nc_get_vara(mFileID, varid, start.data(), count.data(), data.data()) != NC_NOERR) {
+				throw std::runtime_error("NetCDF_Reader::readVariableChunk || "
+					"Error reading variable, variable: " + vname + " || NetCDF file: " + mFileName);
+			}
+		}
+	};
     
+	// get lengths of dimensions for a variable
+	void getVarDimensions(const std::string &vname, std::vector<size_t> &dims) const;
+	
+	int inquireVariable(const std::string &vname) const;	
     // string
     void readString(const std::string &vname, std::vector<std::string> &data) const;
     
