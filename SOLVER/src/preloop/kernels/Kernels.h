@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "global.h"
+#include "eigenc.h"
 
 class Parameters;
 class Domain;
@@ -27,8 +28,8 @@ private:
 	bool mComputeKernels;
 	bool mDumpTimeKernels;
 	//filtering 
-	std::string mFilter;
-	std::vector<Real> mFiltParams;
+	int mNumFilters;
+	RMatX2 mFiltParams;
 	
 	//tapering 
 	std::string mTaper;
@@ -41,6 +42,8 @@ private:
 	double mThetaMin = 0., mThetaMax = 180.;
 	
 	int mTotalStepsKernels;
+	
+	Real mBegWin, mEndWin;
 	
 	
 };

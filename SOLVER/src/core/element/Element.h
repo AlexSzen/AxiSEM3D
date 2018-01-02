@@ -12,6 +12,8 @@ class PRT;
 #include "eigenp.h"
 
 class Element {
+
+friend class KernerElement; //for access to gradient 
 public:    
     Element(Gradient *grad, PRT *prt, const std::array<Point *, nPntElem> &points);
     virtual ~Element();

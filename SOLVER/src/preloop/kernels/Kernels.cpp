@@ -42,9 +42,18 @@ void Kernels::buildInparam(Kernels *&kernels, const Parameters &par, int totalSt
 		
 	} else throw std::runtime_error("Parameters :: filter " + filt + " not implemented");
 	
-	kernels->mFilter = filt;
-	kernels->mFiltParams = filtParams;
+	kernels->mNumFilters = par.getSize("FILTER_PARAMS")/2;
+	kernels->mFiltParams = RMatX2(kernels->mNumFilters,2);
+	int ilist = 0;
+	for (int i = 0; i < kernels->mNumFilters; i++) {
+		kernels->mFiltParams(i,0) = par.getValue<Real>("FILTER_PARAMS", ilist);
+		kernels->mFiltParams(i,1) = par.getValue<Real>("FILTER_PARAMS", ilist+1);
+		ilist+=2;
+	}
 	
+	kernels->mBegWin = par.getValue<Real>("BEG_WINDOW");
+	kernels->mEndWin = par.getValue<Real>("END_WINDOW");
+
 	kernels->mTaper = par.getValue<std::string>("TAPER_TYPE");
 	
 	kernels->mNumKernels = par.getSize("KERNEL_TYPES");
@@ -76,7 +85,7 @@ void Kernels::release(Domain &domain, const Mesh &mesh) {
 	
 	if (!mComputeKernels) return;
 	
-	Kerner *kerner = new Kerner(mDumpTimeKernels, mNumKernels, mKerTypes, mTotalStepsKernels, mesh.getMaxNr());  
+	Kerner *kerner = new Kerner(mDumpTimeKernels, mNumKernels, mKerTypes, mTotalStepsKernels, mesh.getMaxNr(), mFiltParams, mBegWin, mEndWin);  
 	
 	for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {
 		Element *elem = domain.getElement(ielem);
@@ -99,7 +108,11 @@ std::string Kernels::verbose() {
 		ss << mKerTypes[i] << " ";
 	}
 	ss << std::endl;
-	ss << "Filter : " << mFilter << std::endl;
+	ss << "Number of filters : " << mNumFilters<< "\n" << std::endl;
+	for (int i = 0; i<mNumFilters; i++) {
+		ss << "Type : log gabor, center period = "<< mFiltParams(i,0) << "s sigma = " << mFiltParams(i,1) << "\n"; 
+	}
+	ss << std::endl;
 	ss << "Taper : " << mTaper << std::endl;
 	ss << "========================= Kernels ========================\n" << std::endl;
 	return ss.str();

@@ -139,6 +139,8 @@ include_directories(
     src/core/domain
     src/core/newmark
     src/core/Kernels
+    src/core/Kernels/fftw
+    src/core/Kernels/Processing
     ############################## preloop ##############################
     src/preloop
     src/preloop/utilities
@@ -251,6 +253,10 @@ add_executable(
     src/core/Kernels/Kerner.cpp
     src/core/Kernels/KernerElement.cpp
     src/core/Kernels/KernerIO.cpp
+    src/core/Kernels/fftw/KernerFFTW_N3.cpp
+    src/core/Kernels/fftw/KernerFFTW_N6.cpp
+    src/core/Kernels/fftw/KernerFFTW_N9.cpp
+    src/core/Kernels/Processing/Processor.cpp
     ############################## preloop ##############################
     src/preloop/utilities/XMath.cpp
     src/preloop/utilities/Geodesy.cpp

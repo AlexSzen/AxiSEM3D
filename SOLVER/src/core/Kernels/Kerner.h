@@ -4,6 +4,8 @@
 
 #include <vector>
 #include <string>
+#include "eigenc.h"
+
 class DomainRecorder;
 class KernerElement;
 class KernerIO;
@@ -13,7 +15,7 @@ class KernerIO;
 class Kerner {
 	
 public:
-	Kerner(bool dumpTimeKernels, int numKernels, std::vector<std::string> kerTypes, int totSteps, int maxNr);
+	Kerner(bool dumpTimeKernels, int numKernels, std::vector<std::string> kerTypes, int totSteps, int maxNr, const RMatX2 filtParams, Real begWin, Real endWin);
 	~Kerner();
 	
 	void initialize();
@@ -45,4 +47,10 @@ private:
 	
 	int mMaxNr; //used for fftw init 
 	int mTotSteps; // also for fftw (and others)
+	
+	//filtering 
+	RMatX2 mFiltParams;
+	
+	// windowing 
+	Real mBegWin, mEndWin;
 };

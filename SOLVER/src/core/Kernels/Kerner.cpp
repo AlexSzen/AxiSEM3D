@@ -7,9 +7,10 @@
 #include "DomainRecorder.h"
 #include "eigenc.h"
 #include "PreloopFFTW.h" //just for lucky number 
+#include "Processor.h"
 
-Kerner::Kerner(bool dumpTimeKernels, int numKernels, std::vector<std::string> kerTypes, int totSteps, int maxNr): 
-mDumpTimeKernels(dumpTimeKernels), mNumKernels(numKernels), mKerTypes(kerTypes), mMaxNr(maxNr) {
+Kerner::Kerner(bool dumpTimeKernels, int numKernels, std::vector<std::string> kerTypes, int totSteps, int maxNr, const RMatX2 filtParams, Real begWin, Real endWin): 
+mDumpTimeKernels(dumpTimeKernels), mNumKernels(numKernels), mKerTypes(kerTypes), mMaxNr(maxNr), mFiltParams(filtParams), mBegWin(begWin), mEndWin(endWin) {
 	
 	mIO = new KernerIO();
 	mTotSteps = PreloopFFTW::nextLuckyNumber(2 * totSteps + 1, false); //for fft we need to padd the wavefields with 0
@@ -23,25 +24,27 @@ Kerner::~Kerner() {
 void Kerner::initialize() {
 	
 	mIO->initialize(mDumpTimeKernels, mNumKernels);
-	//mFFT->initialize
-	//mProcessor->initialize	
+
+	Processor::initialize(mTotSteps, mDomainRecorder->mBufferTime, mFiltParams, mBegWin, mEndWin);	
 	
 }
 
 void Kerner::finalize() {
+	
 	mIO->finalize();
+	Processor::finalize();
 }
 
 void Kerner::computeKernels() {
 	
-	distributeFwdWvfToElements();
 	distributeBwdWvfToElements();
+	distributeFwdWvfToElements();
+
 	distributeMaterialToElements();
 	
 	for (int ielem = 0; ielem < mKerElements.size(); ielem++) {
 		
 		KernerElement *kerElem = mKerElements[ielem];
-		
 		kerElem->computeKernels(mDumpTimeKernels);
 		//mKernels.push_back(kerElem->getKernels());
 	//	if (mDumpTimeKernels) kerElem->feedTimeKernelsBuffer(mTimeKernels, ielem);
@@ -53,7 +56,7 @@ void Kerner::distributeFwdWvfToElements() {
 	
 	vec_vec_ar6_RMatPP forward_disp;
 	std::vector<int> Nus;
-	int totSteps;
+	int totSteps; //this is tot steps of the wvf, then we padd for fft  
 	
 	int startElem;
 	std::vector<int> countElem(XMPI::nproc(), 0);
@@ -125,6 +128,7 @@ void Kerner::distributeBwdWvfToElements() {
 		nuOffset+=kerElem->getNuBackward() + 1;	
 		
 		kerElem->setBackwardDisp(dispElem);
+		kerElem->setTimeAndFreqSize(mTotSteps);
 
 	}
 		

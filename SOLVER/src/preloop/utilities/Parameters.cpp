@@ -19,6 +19,7 @@ void Parameters::initReadBcast() {
     readParFile(Parameters::sInputDirectory + "/inparam.time_src_recv");
     readParFile(Parameters::sInputDirectory + "/inparam.advanced");
 	readParFile(Parameters::sInputDirectory + "/inparam.inverse");
+	readParFile(Parameters::sInputDirectory + "/filters.dat");
 
 }
 
@@ -116,6 +117,8 @@ void Parameters::registerAll() {
 	registerPar("BEG_WINDOW");
 	registerPar("END_WINDOW");
 	
+	// filters.dat 
+	registerPar("FILTER_PARAMS");
 }
 
 void Parameters::parseLine(const std::string &line) {

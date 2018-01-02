@@ -159,7 +159,6 @@ int axisem_main(int argc, char *argv[]) {
 		//release kernels
 		MultilevelTimer::begin("Release Kerner", 1);
 		pl.mKernels->release(*(sv.mDomain), *(pl.mMesh));
-		sv.mDomain->initializeKerner();
 		MultilevelTimer::end("Release Kerner", 1);
         
         // verbose domain 
@@ -190,7 +189,10 @@ int axisem_main(int argc, char *argv[]) {
         //////// GoGoGo
         XMPI::barrier();
         sv.mNewmark->solve(verbose);
-        
+
+        /////// at the end of time loop we start kernels 	
+		sv.mDomain->initializeKerner();
+
 		/////// compute kernels 
 		sv.mDomain->computeKernels();
 		
