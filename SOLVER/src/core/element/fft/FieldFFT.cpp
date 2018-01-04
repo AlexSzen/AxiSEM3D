@@ -7,7 +7,7 @@
 #include "SolverFFTW_N3.h"
 #include "SolverFFTW_N6.h"
 #include "SolverFFTW_N9.h"
-
+#include <iostream>
 void FieldFFT::transformF2P(const vec_ar3_CMatPP &uc, int Nr) {
     int Nu = Nr / 2;
     CMatXN3 &ucf = SolverFFTW_N3::getC2R_CMat(Nr);
@@ -28,6 +28,7 @@ void FieldFFT::transformF2P(const vec_ar9_CMatPP &uc, int Nr) {
     int Nu = Nr / 2;
     CMatXN9 &ucf = SolverFFTW_N9::getC2R_CMat(Nr);
     makeFlat<vec_ar9_CMatPP, CMatXN9>(uc, ucf, Nu);
+
     SolverFFTW_N9::computeC2R(Nr);
     // output to SolverFFTW_N9::getC2R_RMat(Nr);
 }

@@ -11,7 +11,9 @@ class KernerElement {
 public:
 	KernerElement(const Element *elem);
 	void computeKernels(bool dumpTimeKernels);
-	void feedTimeKernelsBuffer();
+	void feedKernels(vec_vec_ar12_RMatPP &physKernels, int nuLine, int nuElem);
+	void clearKernels() {mPhysicalKernels.clear();};
+	void test();
 	
 	void setForwardDisp(const vec_vec_ar3_CMatPP disp) {mForwardDisp = disp;}; //not passed by ref. we actually make a copy because we then clear the global field.
 	void setBackwardDisp(const vec_vec_ar3_CMatPP disp) {mBackwardDisp = disp;}; 
@@ -22,17 +24,18 @@ public:
 	const int getNuForward() const {return mNuForward;};
 	const int getNuBackward() const {return mElement->getMaxNu();} ;
 	
+
+	
 private:
 	
-	// intermediate computations for kernels : computes frequency domain kernels
-	// for each slice. ready to be put through various filters.
+
+	// computes kernels R (physical domain) Fr (frequency domain)
 	void computeBaseKernelsRFr(vec_vec_ar6_CMatPP &kerRF); 
-	void computeBaseKernelsF(vec_vec_ar6_CMatPP &kerRFr, vec_vec_ar6_CMatPP &kerTF, vec_vec_ar6_RMatPP &kerTR, vec_ar6_RMatPP &baseKernelsT_inu, vec_ar6_RMatPP &baseKernelsR_it, int ifilt);
-	void computePhysicalKernels(); 
-	
-	// for each filter computes time and fourier coeffs base kernels 
-	void computeBaseKernelsTF();
-	
+	//computes kernels F (fourier domain) i.e time integrated 
+	void computeBaseKernelsTF(vec_vec_ar6_CMatPP &kerRFr, vec_vec_ar6_CMatPP &kerTF, vec_vec_ar6_RMatPP &kerTR, vec_ar6_RMatPP &baseKernelsT_inu, vec_ar6_RMatPP &baseKernelsR_it, int ifilt);
+	// multiplies base kernels with material to get physical kernels in fourier domain 
+	//void computePhysicalKernels(int ifilt); 
+		
 	const Element *mElement;
 	int mNuForward;
 	int mNrForward;
@@ -48,11 +51,11 @@ private:
 	// material fields. numbering is rho, vph, vpv, vsh, vsv, eta. 
 	vec_ar6_CMatPP mMaterials;
 	
-	// base kernels (time integrated) for each filter. 
+	// base kernels (time integrated). 
 	// numbering is rho, lambda, mu, a, b, c. 
-	vec_vec_ar6_CMatPP mBaseKernels;
+	vec_vec_ar9_CMatPP mBaseKernels;
 	
-	// physical kernels (time integrated)
+	// physical kernels (time integrated) for each filter
 	// numbering is rho, vsh, vsv, vph, vpv, eta.
 	vec_vec_ar6_CMatPP mPhysicalKernels;
 };

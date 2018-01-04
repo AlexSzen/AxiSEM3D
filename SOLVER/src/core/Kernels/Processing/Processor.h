@@ -17,8 +17,7 @@ public:
 	
 	
 	static void zeroPad(RColX &trace, int npad);
-	static void filter(vec_ar3_CMatPP &uf);
-	static void filter(vec_ar9_CMatPP &uf);
+	static void taper(vec_vec_ar3_CMatPP &u);
 	
 	static void transformT2F(const vec_ar3_RMatPP& ut, vec_ar3_CMatPP& uf);
 	static void transformT2F(const vec_ar6_RMatPP& ut, vec_ar6_CMatPP& uf);
@@ -62,7 +61,7 @@ public:
 		}
 		
 		for (int i = 0; i < uf1.size(); i++) {
-			conv[i][indc] += prefactor * temp1[i] * temp2[i]; //we use += because for some kernels convolution is done in several calls to sumAndConvolve. 
+			conv[i][indc] += prefactor * temp1[i].schur(temp2[i]); //we use += because for some kernels convolution is done in several calls to sumAndConvolve. 
 		}
 		
 		
@@ -73,7 +72,7 @@ public:
 	static void timeWindow(const vec_vec_arY_CMatPP &utf, vec_arY_CMatPP &uf) {
 		
 		for (int it = 0; it < sTime.size(); it++) 
-			if (sTime[it] > sWindowBeg && sTime[it] < sWindowEnd) 
+			if (sTime(it) > sWindowBeg && sTime(it) < sWindowEnd) 
 				for (int inu = 0; inu < uf.size(); inu ++) 
 					for (int ic = 0; ic < uf[0].size(); ic++)
 						uf[inu][ic] += utf[it][inu][ic];

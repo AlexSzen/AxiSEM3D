@@ -61,8 +61,10 @@ typedef std::vector<ar6_CMatPP> vec_ar6_CMatPP;
 typedef std::vector<ar9_CMatPP> vec_ar9_CMatPP;
 typedef std::vector<vec_ar6_RMatPP> vec_vec_ar6_RMatPP; //wavefield
 typedef std::vector<vec_ar9_RMatPP> vec_vec_ar9_RMatPP; //wavefield
+typedef std::vector<vec_ar12_RMatPP> vec_vec_ar12_RMatPP; //kernels 
 typedef std::vector<vec_ar3_CMatPP> vec_vec_ar3_CMatPP; //wavefield
 typedef std::vector<vec_ar6_CMatPP> vec_vec_ar6_CMatPP; //wavefield
+typedef std::vector<vec_ar9_CMatPP> vec_vec_ar9_CMatPP; //wavefield
 
 const ar2_RMatPP zero_ar2_RMatPP = {RMatPP::Zero(), RMatPP::Zero()};
 const ar3_RMatPP zero_ar3_RMatPP = {RMatPP::Zero(), RMatPP::Zero(), RMatPP::Zero()};

@@ -33,10 +33,11 @@ private:
 	void distributeBwdWvfToElements();
 	void distributeMaterialToElements();
 	
+	
 	DomainRecorder *mDomainRecorder;
 	KernerIO *mIO;
-//	Processor *mPrc;
 	std::vector<KernerElement*> mKerElements;
+	vec_vec_ar12_RMatPP mPhysicalKernels; // real and imag part of kernels for all filters and whole domain.
 	
 	// time kernels options 
 	bool mDumpTimeKernels;

@@ -36,7 +36,10 @@ void Processor::initialize(int totSteps, const RColX &bufTime, const RMatX2 filt
 
 	// create taper with current time 
 	Tapers::cosineTaper(sTaper, temp_size);
-	
+
+	// prolong taper 
+	zeroPad(sTaper, totSteps);
+
 	// prolong time 
 	zeroPad(sTime, totSteps);
 	
@@ -78,11 +81,27 @@ void Processor::finalize() {
 	
 }
 
+void Processor::taper(vec_vec_ar3_CMatPP &u) {
+	
+	if (u.size() != sTaper.size()) throw std::runtime_error("Processor::taper error : trace and taper have different sizes.");
+
+	for (int it = 0; it < u.size(); it++)
+		for (int inu = 0; inu < u[0].size(); inu++)
+			for (int ic = 0; ic < 3; ic++)
+				u[it][inu][ic] *= sTaper(it);
+	
+}
+
 void Processor::zeroPad(RColX &trace, int npad) {
 	
+	int temp_size = trace.size();
 	trace.conservativeResize( npad );
-		
+	
+	for (int i = temp_size; i < trace.size(); i++) {
+		trace(i) = zero;
+	}
 }
+
 
 
 void Processor::transformT2F(const vec_ar3_RMatPP& ut, vec_ar3_CMatPP& uf) {
@@ -91,10 +110,9 @@ void Processor::transformT2F(const vec_ar3_RMatPP& ut, vec_ar3_CMatPP& uf) {
 	RMatXN3 &tempT = KernerFFTW_N3::getR2C_RMat();
 	makeFlat<vec_ar3_RMatPP, RMatXN3>(ut, tempT);
 	KernerFFTW_N3::computeR2C();
-	CMatXN3 &tempF = KernerFFTW_N3::getR2C_CMat();
+	CMatXN3 tempF = KernerFFTW_N3::getR2C_CMat();
 	makeStruct<vec_ar3_CMatPP, CMatXN3>(uf, tempF);
-	
-	
+
 }
 
 void Processor::transformT2F(const vec_ar6_RMatPP& ut, vec_ar6_CMatPP& uf) {
@@ -103,49 +121,50 @@ void Processor::transformT2F(const vec_ar6_RMatPP& ut, vec_ar6_CMatPP& uf) {
 	RMatXN6 &tempT = KernerFFTW_N6::getR2C_RMat();
 	makeFlat<vec_ar6_RMatPP, RMatXN6>(ut, tempT);
 	KernerFFTW_N6::computeR2C();
-	CMatXN6 &tempF = KernerFFTW_N6::getR2C_CMat();
+	CMatXN6 tempF = KernerFFTW_N6::getR2C_CMat();
 	makeStruct<vec_ar6_CMatPP, CMatXN6>(uf, tempF);
 	
-	
+
 }
 
 void Processor::transformT2F(const vec_ar9_RMatPP& ut, vec_ar9_CMatPP& uf) {
 	
 
 	RMatXN9 &tempT = KernerFFTW_N9::getR2C_RMat();
+
 	makeFlat<vec_ar9_RMatPP, RMatXN9>(ut, tempT);
 	KernerFFTW_N9::computeR2C();
-	CMatXN9 &tempF = KernerFFTW_N9::getR2C_CMat();
+	CMatXN9 tempF = KernerFFTW_N9::getR2C_CMat();
 	makeStruct<vec_ar9_CMatPP, CMatXN9>(uf, tempF);
-	
+
 }
 
 void Processor::transformF2T(const vec_ar3_CMatPP& uf, vec_ar3_RMatPP& ut) {
 	
 	CMatXN3 &tempF = KernerFFTW_N3::getC2R_CMat();
 	makeFlat<vec_ar3_CMatPP, CMatXN3>(uf, tempF);
-	KernerFFTW_N3::computeR2C();
-	RMatXN3 &tempT = KernerFFTW_N3::getC2R_RMat();
+	KernerFFTW_N3::computeC2R();
+	RMatXN3 tempT = KernerFFTW_N3::getC2R_RMat();
 	makeStruct<vec_ar3_RMatPP, RMatXN3>(ut, tempT);
-	
+
 }
 
 void Processor::transformF2T(const vec_ar6_CMatPP& uf, vec_ar6_RMatPP& ut) {
-	
+
 	CMatXN6 &tempF = KernerFFTW_N6::getC2R_CMat();
 	makeFlat<vec_ar6_CMatPP, CMatXN6>(uf, tempF);
-	KernerFFTW_N6::computeR2C();
-	RMatXN6 &tempT = KernerFFTW_N6::getC2R_RMat();
+	KernerFFTW_N6::computeC2R();
+	RMatXN6 tempT = KernerFFTW_N6::getC2R_RMat();
 	makeStruct<vec_ar6_RMatPP, RMatXN6>(ut, tempT);
-	
+
 }
 
 void Processor::transformF2T(const vec_ar9_CMatPP& uf, vec_ar9_RMatPP& ut) {
 
-	CMatXN9 &tempF = KernerFFTW_N9::getC2R_CMat();
+	CMatXN9 &tempF = KernerFFTW_N9::getC2R_CMat(); 
 	makeFlat<vec_ar9_CMatPP, CMatXN9>(uf, tempF);
-	KernerFFTW_N9::computeR2C();
-	RMatXN9 &tempT = KernerFFTW_N9::getC2R_RMat();
+	KernerFFTW_N9::computeC2R();
+	RMatXN9 tempT = KernerFFTW_N9::getC2R_RMat();
 	makeStruct<vec_ar9_RMatPP, RMatXN9>(ut, tempT);
-	
+
 }
