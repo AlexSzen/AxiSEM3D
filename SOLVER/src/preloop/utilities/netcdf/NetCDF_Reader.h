@@ -97,6 +97,26 @@ public:
 			}
 		}
 	};
+	
+	template<class base_type>
+	void getAttribute(const std::string &vname, 
+		const std::string &attname, base_type attvalue) const {
+		int varid = -1;
+		int varloc = -1;
+		if (vname == "") {
+			varid = NC_GLOBAL;
+			varloc = mFileID;
+		} else {
+			varid = inquireVariable(vname);
+			varloc = mFileID;
+		}
+		if (nc_get_att(varloc, varid, attname.c_str(), &attvalue) != NC_NOERR) {
+			throw std::runtime_error("NetCDF_Reader::getAttribute || "
+				"Error getting attribute from variable, variable: " + vname 
+				+ ", attribute: " + attname  
+				+ " || NetCDF file: " + mFileName);
+		}
+	};
     
 	// get lengths of dimensions for a variable
 	void getVarDimensions(const std::string &vname, std::vector<size_t> &dims) const;

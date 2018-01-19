@@ -87,7 +87,7 @@ void KernerIO::dumpToFile(vec_vec_ar12_RMatPP &kernels, int numFilters) {
 	std::string fname = Parameters::sOutputDirectory + "/kernels/kernels_db.nc4";
 	mNetCDF_w->openParallel(fname);
 	
-	for (int ifilt = 0; ifilt < 67; ifilt ++) {
+	for (int ifilt = 0; ifilt < mTotSteps ; ifilt ++) {
 		
 		mNetCDF_w->writeVariableChunk("Kernels", kernels[ifilt], startKernels, countKernels);
 		startKernels[0]++;
@@ -117,20 +117,39 @@ void KernerIO::loadNus(std::vector<int> &Nus) {
 	
 }
 
-void KernerIO::loadWavefield(vec_vec_ar6_RMatPP &disp, std::vector<int> &Nus) {
+void KernerIO::loadNrs(std::vector<int> &Nrs) {
 	
 	std::string fname_wvf = Parameters::sOutputDirectory + "/wavefields/wavefield_db_fwd.nc4";
-
 	mNetCDF_r->openParallel(fname_wvf);
 
 	//read nus 
 	std::vector<size_t> startElem, countElem;
 	startElem.push_back(mStartElem);
 	countElem.push_back(mCountElem);
+	Nrs.assign(mCountElem, 0);
+	
+	mNetCDF_r->readVariableChunk("Nrs", Nrs, startElem, countElem);
+	
+	mNetCDF_r->close();
+	
+}
+
+void KernerIO::loadWavefield(vec_vec_ar6_RMatPP &disp, std::vector<int> &Nus, std::vector<int> &Nrs) {
+	
+	std::string fname_wvf = Parameters::sOutputDirectory + "/wavefields/wavefield_db_fwd.nc4";
+
+	mNetCDF_r->openParallel(fname_wvf);
+
+	//read nus and nrs 
+	std::vector<size_t> startElem, countElem;
+	startElem.push_back(mStartElem);
+	countElem.push_back(mCountElem);
 	Nus.assign(mCountElem, 0);
+	Nrs.assign(mCountElem, 0);
 	
 	mNetCDF_r->readVariableChunk("Nus", Nus, startElem, countElem);
-	
+	mNetCDF_r->readVariableChunk("Nrs", Nrs, startElem, countElem);
+
 	// create start and count for elemNu
 	int totNuProc = 0;
 	for (int i = 0; i<Nus.size(); i++) totNuProc+=Nus[i];
@@ -167,18 +186,6 @@ void KernerIO::loadWavefield(vec_vec_ar6_RMatPP &disp, std::vector<int> &Nus) {
 	
 	mNetCDF_r->close();
 	
-	
-	std::string fname = Parameters::sOutputDirectory + "/kernels/kernels_db.nc4";
-	mNetCDF_w->openParallel(fname);
-	startElemNu[0] = 0;
-	for (int it = 0; it < mTotSteps; it ++) {
-		
-		mNetCDF_w->writeVariableChunk("Kernels", disp[it], startElemNu, countElemNu);
-		startElemNu[0]++;
-		
-	}
-	
-	mNetCDF_w->close();
 	
 	
 	
@@ -217,9 +224,15 @@ void KernerIO::loadMaterial(vec_ar12_RMatPP &materials, std::vector<int> &Nus) {
 
 	// fill with 0
 	materials.assign(totNuProc, zero_ar12_RMatPP);
+	vec_ar2_RMatPP vp(totNuProc,zero_ar2_RMatPP);
 	
 	mNetCDF_r->readVariableChunk("material_fields", materials, startElemNu, countElemNu);
-		
+//	countElemNu[1] = 2;
+//	mNetCDF_r->readVariableChunk("vp", vp, startElemNu, countElemNu);
+//	for (int i=0;i<totNuProc;i++) {
+	//	materials[i][0] = vp[i][0]; 
+//	}
+	
 	mNetCDF_r->close();
 	
 }

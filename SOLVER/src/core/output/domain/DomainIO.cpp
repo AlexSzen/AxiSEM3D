@@ -7,7 +7,13 @@
 #include "XMPI.h"
 #include "iostream"
 
-void DomainIO::initialize(int totalRecordSteps, int recordInterval, int bufferSize, int totNuProc) {
+void DomainIO::initialize(int totalRecordSteps, int recordInterval, int bufferSize, int totNuProc,
+	double srcLat, double srcLon, double srcDep) {
+	
+	// source location
+	mSrcLat = srcLat;
+	mSrcLon = srcLon;
+	mSrcDep = srcDep;
 	
 	mNetCDF = new NetCDF_Writer();
 	std::string fname = Parameters::sOutputDirectory + "/wavefields/wavefield_db.nc4";
@@ -55,7 +61,14 @@ void DomainIO::initialize(int totalRecordSteps, int recordInterval, int bufferSi
 		mNetCDF->defineVariable<Real>("time", dimsTime);
 		mNetCDF->defineVariable<Real>("displacement_wavefield", dimsWvf);
 		
-		mNetCDF->defModeOff();
+		//number of cores 
+		mNetCDF->addAttribute("", "number_procs", XMPI::nproc());
+		// source location
+		mNetCDF->addAttribute("", "source_latitude", mSrcLat);
+		mNetCDF->addAttribute("", "source_longitude", mSrcLon);
+		mNetCDF->addAttribute("", "source_depth", mSrcDep);
+		mNetCDF->flush();
+		
 		mNetCDF->close();
 	}
 	mNetCDF->openParallel(fname);

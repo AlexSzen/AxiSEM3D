@@ -12,12 +12,13 @@ public:
 	KernerElement(const Element *elem);
 	void computeKernels(bool dumpTimeKernels);
 	void feedKernels(vec_vec_ar12_RMatPP &physKernels, int nuLine, int nuElem);
-	void clearKernels() {mPhysicalKernels.clear();};
+	void clearKernels() {mPhysicalKernels.clear(); mBaseKernels.clear();};
 	void test();
 	
 	void setForwardDisp(const vec_vec_ar3_CMatPP disp) {mForwardDisp = disp;}; //not passed by ref. we actually make a copy because we then clear the global field.
 	void setBackwardDisp(const vec_vec_ar3_CMatPP disp) {mBackwardDisp = disp;}; 
-	void setNuForward(const int nu) {mNuForward = nu; mNrForward = 2 * nu + 1; mNyquist = (int)(mNrForward % 2 == 0);};
+	void setNuForward(const int nu) {mNuForward = nu;};
+	void setNrForward(const int nr) {mNrForward = nr; mNyquist = (int)(mNrForward % 2 == 0);};
 	void setMaterials(const vec_ar6_CMatPP mat) {mMaterials = mat;};
 	void setTimeAndFreqSize(int totSteps) {mTimeSize = totSteps; mFreqSize = totSteps / 2 + 1;}
 	
@@ -27,15 +28,7 @@ public:
 
 	
 private:
-	
-
-	// computes kernels R (physical domain) Fr (frequency domain)
-	void computeBaseKernelsRFr(vec_vec_ar6_CMatPP &kerRF); 
-	//computes kernels F (fourier domain) i.e time integrated 
-	void computeBaseKernelsTF(vec_vec_ar6_CMatPP &kerRFr, vec_vec_ar6_CMatPP &kerTF, vec_vec_ar6_RMatPP &kerTR, vec_ar6_RMatPP &baseKernelsT_inu, vec_ar6_RMatPP &baseKernelsR_it, int ifilt);
-	// multiplies base kernels with material to get physical kernels in fourier domain 
-	//void computePhysicalKernels(int ifilt); 
-		
+			
 	const Element *mElement;
 	int mNuForward;
 	int mNrForward;

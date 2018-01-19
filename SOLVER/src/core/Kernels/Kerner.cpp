@@ -64,10 +64,10 @@ void Kerner::computeKernels() {
 		
 		KernerElement *kerElem = mKerElements[ielem];
 		int nuElem = kerElem->getNuForward() + 1;
-		kerElem->test();
-	//	kerElem->computeKernels(mDumpTimeKernels);
+
+		kerElem->computeKernels(mDumpTimeKernels);
 		kerElem->feedKernels(mPhysicalKernels, nuLine, nuElem);
-		//kerElem->clearKernels();
+		kerElem->clearKernels();
 		nuLine += nuElem;
 	}
 	mIO->dumpToFile(mPhysicalKernels, Processor::sNumFilters);
@@ -79,10 +79,11 @@ void Kerner::distributeFwdWvfToElements() {
 	
 	vec_vec_ar6_RMatPP forward_disp;
 	std::vector<int> Nus;
+	std::vector<int> Nrs;
 	int totSteps = mDomainRecorder->mTotalRecordSteps; //this is tot steps of the wvf, then we padd for fft  
 	
 	
-	mIO->loadWavefield(forward_disp, Nus);
+	mIO->loadWavefield(forward_disp, Nus, Nrs);
 	int nuOffset = 0;
 
 	for (int ielem = 0; ielem < mKerElements.size(); ielem++) {
@@ -111,7 +112,7 @@ void Kerner::distributeFwdWvfToElements() {
 		// set displacement 
 		mKerElements[ielem]->setForwardDisp(dispElem);
 		mKerElements[ielem]->setNuForward(Nus[ielem]-1);
-		
+		mKerElements[ielem]->setNrForward(Nrs[ielem]);
 	}
 	
 	
@@ -182,7 +183,8 @@ void Kerner::distributeMaterialToElements() {
 		}
 		
 		mKerElements[ielem]->setMaterials(materialsElem);
-		
+		nuOffset+=NusFwd[ielem];	
+
 	}
 	
 }

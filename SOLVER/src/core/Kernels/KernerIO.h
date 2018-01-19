@@ -16,7 +16,8 @@ public:
 	void dumpToFile(vec_vec_ar12_RMatPP &kernels, int numFilters);
 	
 	void loadNus(std::vector<int> &Nus);
-	void loadWavefield(vec_vec_ar6_RMatPP &disp, std::vector<int> &Nus);
+	void loadNrs(std::vector<int> &Nrs); 
+	void loadWavefield(vec_vec_ar6_RMatPP &disp, std::vector<int> &Nus, std::vector<int> &Nrs);
 	void loadMaterial(vec_ar12_RMatPP &materials,  std::vector<int> &Nus);
 private:
 	

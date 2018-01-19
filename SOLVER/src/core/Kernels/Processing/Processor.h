@@ -37,36 +37,17 @@ public:
 				uf[i][ic] *= sFilters(ifilt,i);
 	};
 
-	template<class vec_arY_CMatPP> 
-	static void sumAndConvolve(const vec_arY_CMatPP &uf1, const vec_arY_CMatPP &uf2, vec_ar6_CMatPP &conv, const IColX &inds1, const IColX &inds2, Real prefactor, int indc) {
-	// conv specifically for kernels. ufs are fwd and bwd freq domain for 1 slice
-	// inds1 are indices from uf1 to be summed, then convolved with summed inds from uf2
-	// conv is size 6 because 6 base kernels in elastic medium with radial anisotropy, Fichtner p.169 
-	
-		if (uf1.size() != uf2.size()) throw std::runtime_error("Processor::convolveSum : input sizes differ");
+	// take (time) derivative in frequency domain, i.e multiply by 2*pi*i*f
+	template<class vec_arY_CMatPP>
+	static void derivate(vec_arY_CMatPP &uf) {
 		
-		vec_CMatPP temp1(uf1.size(), CMatPP::Zero());
-		vec_CMatPP temp2(uf1.size(), CMatPP::Zero());
+		if (sFreq.size() != uf.size()) throw std::runtime_error("Processor::derivate error : frequency and trace of different lengths.");
 		
-		for (int i = 0; i < uf1.size(); i++) {
-			
-			for (int i1 = 0; i1 < inds1.size(); i1++) {
-				temp1[i] += uf1[i][inds1(i1)]; 
-			}
-			
-			for (int i2 = 0; i2 < inds2.size(); i2++) {
-				temp2[i] += uf2[i][inds2(i2)]; 
-			}
-			
-		}
-		
-		for (int i = 0; i < uf1.size(); i++) {
-			conv[i][indc] += prefactor * temp1[i].schur(temp2[i]); //we use += because for some kernels convolution is done in several calls to sumAndConvolve. 
-		}
-		
-		
-		
+		for (int i = 0; i < uf.size(); i++)
+			for (int ic = 0; ic < uf[0].size(); ic++)
+				uf[i][ic] *= two * (Real) pi * ii * sFreq(i);
 	};
+
 	
 	template<class vec_vec_arY_CMatPP, class vec_arY_CMatPP>
 	static void timeWindow(const vec_vec_arY_CMatPP &utf, vec_arY_CMatPP &uf) {

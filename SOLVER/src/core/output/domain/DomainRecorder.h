@@ -16,7 +16,8 @@ friend class Kerner; //to allow usage of mBufferDisp.
 
 public:
 	
-	DomainRecorder(int totalRecordSteps, int recordInterval, int bufferSize, bool write);
+	DomainRecorder(int totalRecordSteps, int recordInterval, int bufferSize, bool write,
+	double srcLat, double srcLon, double srcDep);
 	~DomainRecorder();
 	
 	void addElement(const Element* elem);
@@ -51,6 +52,9 @@ private:
 	
 	// write file or just keep in ram 
 	bool mWrite;
+	
+	// source location
+	double mSrcLat, mSrcLon, mSrcDep;
 	
 	
 	

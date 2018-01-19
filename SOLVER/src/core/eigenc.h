@@ -59,6 +59,7 @@ typedef std::vector<CMatPP> vec_CMatPP;
 typedef std::vector<ar3_CMatPP> vec_ar3_CMatPP;
 typedef std::vector<ar6_CMatPP> vec_ar6_CMatPP;
 typedef std::vector<ar9_CMatPP> vec_ar9_CMatPP;
+typedef std::vector<vec_ar3_RMatPP> vec_vec_ar3_RMatPP; //wavefield
 typedef std::vector<vec_ar6_RMatPP> vec_vec_ar6_RMatPP; //wavefield
 typedef std::vector<vec_ar9_RMatPP> vec_vec_ar9_RMatPP; //wavefield
 typedef std::vector<vec_ar12_RMatPP> vec_vec_ar12_RMatPP; //kernels 

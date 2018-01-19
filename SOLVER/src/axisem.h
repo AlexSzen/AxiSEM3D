@@ -15,6 +15,7 @@
 #include "Volumetric3D.h"
 #include "Geometric3D.h"
 #include "OceanLoad3D.h"
+//#include "OffAxisSource.h"
 #include "Source.h"
 #include "Mesh.h"
 #include "AttBuilder.h"
@@ -33,6 +34,7 @@ struct PreloopVariables {
     std::vector<Volumetric3D *> mVolumetric3D;
     std::vector<Geometric3D *> mGeometric3D;
     OceanLoad3D *mOceanLoad3D = 0;
+//	OffAxisSourceCollection *mOffAxisSourceCollection = 0; 
     Source *mSource = 0;
     Mesh *mMesh = 0;
     AttBuilder *mAttBuilder = 0;

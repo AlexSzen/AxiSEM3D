@@ -50,6 +50,10 @@ int axisem_main(int argc, char *argv[]) {
         double srcLon = pl.mSource->getLongitude();
         double srcDep = pl.mSource->getDepth();
         MultilevelTimer::end("Build Source", 0);
+		
+		MultilevelTimer::begin("Build Off Axis Source", 0);
+	//	OffAxisSourceCollection::buildInparam(pl.mOffAxisSourceCollection, *(pl.mParameters), verbose);
+		MultilevelTimer::end("Build Off Axis Source", 0);
         
         //////// 3D models 
         MultilevelTimer::begin("Build 3D Models", 0);
@@ -142,6 +146,10 @@ int axisem_main(int argc, char *argv[]) {
         pl.mSource->release(*(sv.mDomain), *(pl.mMesh));
         MultilevelTimer::end("Release Source", 1);
         
+		MultilevelTimer::begin("Release Source", 1);
+	//	pl.mOffAxisSourceCollection->release(*(sv.mDomain), *(pl.mMesh));
+		MultilevelTimer::end("Release Source", 1);
+		
         // release stf 
         MultilevelTimer::begin("Release STF", 1);
         pl.mSTF->release(*(sv.mDomain));

@@ -204,7 +204,7 @@ RDRowN XMath::computeFourierAtPhi(const RDMatXN &data, double phi) {
 
 const vec_CMatPP XMath::computeFourierStructured(const RDMatXN &data) {
 	int nslices = data.rows();
-	int nfourier = nslices/2 +1;
+	int nfourier = nslices/2 + 1;
 	vec_CMatPP result(nfourier,CMatPP::Zero());
 	CMatXX unstructured(nfourier, nPntElem);
 	

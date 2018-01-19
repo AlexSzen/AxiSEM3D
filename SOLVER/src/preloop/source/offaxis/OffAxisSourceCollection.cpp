@@ -1,21 +1,21 @@
-// OffAxisSource.h
+// OffAxisSourceCollection.h
 // created by Kuangdai on 11-Nov-2017 
 // base class of off-axis source
 
-#include "OffAxisSource.h"
+#include "OffAxisSourceCollection.h"
 #include "Geodesy.h"
 #include "Quad.h"
 #include "Domain.h"
 #include "Element.h"
 // TODO: implement this in core
-// #include "OffAxisSourceTerm.h"
+// #include "OffAxisSourceCollectionTerm.h"
 #include "Mesh.h"
 #include "XMath.h"
 #include "SpectralConstants.h"
 #include "XMPI.h"
 #include "MultilevelTimer.h"
 
-OffAxisSource::OffAxisSource(double depth, double lat, double lon,
+OffAxisSourceCollection::OffAxisSourceCollection(double depth, double lat, double lon,
 	double srcLat, double srcLon, double srcDep):
 mDepth(depth), mLatitude(lat), mLongitude(lon) {
     // handle singularity at poles
@@ -37,7 +37,7 @@ mDepth(depth), mLatitude(lat), mLongitude(lon) {
     mPhiSrc = rtpS(2);
 }
 
-void OffAxisSource::release(Domain &domain, const Mesh &mesh) const {
+void OffAxisSourceCollection::release(Domain &domain, const Mesh &mesh) const {
     MultilevelTimer::begin("Locate Off-axis Source", 2);
     // locate local
     int myrank = XMPI::nproc();
@@ -50,14 +50,14 @@ void OffAxisSource::release(Domain &domain, const Mesh &mesh) const {
     // min recRank
     int myrank_min = XMPI::min(myrank);
     if (myrank_min == XMPI::nproc()) {
-        throw std::runtime_error("OffAxisSource::release || Error locating off-axis source.");
+        throw std::runtime_error("OffAxisSourceCollection::release || Error locating off-axis source.");
     }
     MultilevelTimer::end("Locate Off-axis Source", 2);
 
     MultilevelTimer::begin("Compute Off-axis Source", 2);
     // release to me
     if (myrank_min == XMPI::rank()) {
-        // compute OffAxisSource term
+        // compute OffAxisSourceCollection term
         vec_arPP_CMatX3 fouriers;
         const Quad *myQuad = mesh.getQuad(locTag);
         computeSourceFourier(*myQuad, interpFactXii, interpFactEta, mPhiSrc, fouriers);
@@ -66,19 +66,19 @@ void OffAxisSource::release(Domain &domain, const Mesh &mesh) const {
 		// TODO: implement this in core
 		//       the existing class SourceTerm is not general enough
 		//       because the source time funciton varies for each source
- //        domain.addSourceTerm(new SourceTerm(myElem, fouriers));
+         domain.addSourceTerm(new SourceTerm(myElem, fouriers));
     }
     MultilevelTimer::end("Compute Off-axis Source", 2);
 }
 
-bool OffAxisSource::locate(const Mesh &mesh, int &locTag, 
+bool OffAxisSourceCollection::locate(const Mesh &mesh, int &locTag, 
 	RDColP &interpFactXii, RDColP &interpFactEta) const {
-    MultilevelTimer::begin("R OffAxisSource", 3);
+    MultilevelTimer::begin("R OffAxisSourceCollection", 3);
     RDCol2 srcCrds = RDCol2::Zero();
     double r = mesh.computeRadiusRef(mDepth, mLatitude, mLongitude);
 	srcCrds(0) = r * sin(mThetaSrc);
 	srcCrds(1) = r * cos(mThetaSrc);
-    MultilevelTimer::end("R OffAxisSource", 3);
+    MultilevelTimer::end("R OffAxisSourceCollection", 3);
 
     // check range of subdomain
     if (srcCrds(0) > mesh.sMax() + tinySingle || srcCrds(0) < mesh.sMin() - tinySingle) {
@@ -111,18 +111,36 @@ bool OffAxisSource::locate(const Mesh &mesh, int &locTag,
 }
 
 #include "Parameters.h"
-//#include "OffAxisPointForce.h"
+#include "NetCDF_Reader.h"
+#include "OffAxisPointForce.h"
 #include <fstream>
 #include <boost/algorithm/string.hpp>
 
-void OffAxisSource::buildInparam(std::vector<OffAxisSource> *&offsrc, 
-	const Parameters &par, int verbose) {
+void OffAxisSourceCollection::buildInparam(const Parameters &par, int verbose) {
     // TODO: 
+	// read location of fwd source from file 
 	// read location of off-axis sources
 	// read source-time function
 	// build off-axis source objects
-/*
 
+
+	std::string fname_fwd = Parameters::sOutputDirectory + "wavefields/wavefield_db_fwd.nc4";
+	NetCDF_Reader nc_reader = NetCDF_Reader();
+	double fwd_lat, fwd_lon, fwd_dep;
+
+	
+	if (XMPI::root()) {
+		
+		nc_reader.open(fname_fwd);
+		
+		nc_reader.getAttribute("", "source_latitude", fwd_lat);
+		nc_reader.getAttribute("", "source_longitude", fwd_lon);
+		nc_reader.getAttribute("", "source_depth", fwd_dep);
+		nc_reader.close();
+
+	}
+	
+	
 	std::string src_type = par.getValue<std::string>("SOURCE_TYPE");
 	std::string src_file = par.getValue<std::string>("SOURCE_FILE");
 	if (boost::iequals(src_type, "point_force")) {
@@ -156,9 +174,9 @@ void OffAxisSource::buildInparam(std::vector<OffAxisSource> *&offsrc,
 		XMPI::bcast(f1);
 		XMPI::bcast(f2);
 		XMPI::bcast(f3);
-		offscr.push_back(OffAxisPointForce(depth, lat, lon, 0, 90, 1900000));
+		mSources.push_back(OffAxisPointForce(depth, lat, lon, 0, 90, 1900000));
 	} else {
 		 throw std::runtime_error("Source::buildInparam || Unknown source type: " + src_type);
 	}
-	*/
+	
 }

@@ -5,9 +5,11 @@
 #include "DomainIO.h"
 #include "DomainInfo.h"
 
-DomainRecorder::DomainRecorder(int totalRecordSteps, int recordInterval, int bufferSize, bool write): 
+DomainRecorder::DomainRecorder(int totalRecordSteps, int recordInterval, int bufferSize, bool write,
+double srcLat, double srcLon, double srcDep): 
 mTotalRecordSteps(totalRecordSteps),
-mRecordInterval(recordInterval), mBufferSize(bufferSize), mWrite(write) {
+mRecordInterval(recordInterval), mBufferSize(bufferSize), mWrite(write),
+mSrcLat(srcLat), mSrcLon(srcLon), mSrcDep(srcDep) {
 	mBufferLineTime = 0;
 	mBufferLineNu = 0;
 	mIO = new DomainIO();
@@ -33,7 +35,7 @@ void DomainRecorder::initialize() {
 	}
 	vec_ar6_RMatPP initBuf(totNu, zero_ar6_RMatPP);
 	mBufferDisp.assign(mBufferSize, initBuf);
-	mIO->initialize(mTotalRecordSteps, mRecordInterval, mBufferSize, totNu);
+	mIO->initialize(mTotalRecordSteps, mRecordInterval, mBufferSize, totNu, mSrcLat, mSrcLon, mSrcDep);
 }
 
 void DomainRecorder::finalize() {

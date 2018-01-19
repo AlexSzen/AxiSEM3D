@@ -60,7 +60,8 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	std::vector<int> Nrs(elems_proc,0);
 	vec_RMatPP mesh_S(elems_proc, RMatPP::Zero());
 	vec_RMatPP mesh_Z(elems_proc, RMatPP::Zero());
-	
+	vec_ar2_RMatPP vp(elemNus_proc, zero_ar2_RMatPP);
+
 	RMatXX_RM zero_matAni(gll_ani,gll_ani); //animations 
 	zero_matAni.setZero();	
 	vec_RMatXX_RM zero_ar2_matAni(2,zero_matAni);
@@ -70,6 +71,7 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	
 	//vec_ar2_RMatPP mesh_vp, mesh_vs;
 	vec_ar12_RMatPP materials;
+	int nuline = 0;
 	for (int i=0; i<elems_proc; i++) {
 		
 		Element* elem = domain.getElement(i);
@@ -87,7 +89,8 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 		vec_CMatPP vsv_elem = quad->getMaterialFourier("vsv", SlicePlot::PropertyRefTypes::Property3D);
 		vec_CMatPP rho_elem = quad->getMaterialFourier("rho", SlicePlot::PropertyRefTypes::Property3D);
 		vec_CMatPP eta_elem = quad->getMaterialFourier("eta", SlicePlot::PropertyRefTypes::Property3D);
-
+		vec_CMatPP vp_elem = quad->getMaterialFourier("vp", SlicePlot::PropertyRefTypes::Property3D);;
+		vec_CMatPP vs_elem = quad->getMaterialFourier("vs", SlicePlot::PropertyRefTypes::Property3D);;
 
 		for (int ialpha=0; ialpha<Nus[i]; ialpha++) { //i assume materials have this expansion order..? they are padded to it anw for kernel computation 
 			
@@ -99,7 +102,9 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 			(mesh_vs_ani.back())[0] = vs_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).real();
 			(mesh_vs_ani.back())[1] = vs_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).imag();
 			*/
-			
+			for (int ipol = 0; ipol < nPntEdge; ipol ++)
+				for (int jpol = 0; jpol < nPntEdge; jpol++)
+					vp[nuline][0](ipol,jpol) = (Real) elem->getDomainTag();
 			materials.push_back(zero_ar12_RMatPP);
 			
 			if (ialpha<rho_elem.size()) {
@@ -134,9 +139,9 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 			(mesh_vs.back())[0] = vs_elem[ialpha].real();
 			(mesh_vs.back())[1] = vs_elem[ialpha].imag();*/
 
-
+			
 		}
-		
+		nuline += Nus[i];
 	    } else {
 		NusAni[i] = 0;
 		NrsAni[i] = 0;
@@ -212,20 +217,20 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	countElemGll_ani.push_back(gll_ani);
 	
 	std::vector<size_t> startElemNuGll_ani, countElemNuGll_ani;
-	startElemNuGll_ani.push_back(temp_startElemNu_ani);
-	countElemNuGll_ani.push_back(temp_countElemNu_ani[XMPI::rank()]);
+	startElemNuGll_ani.push_back(temp_startElemNu);
+	countElemNuGll_ani.push_back(temp_countElemNu[XMPI::rank()]);
 	startElemNuGll_ani.push_back(0);
-	countElemNuGll_ani.push_back(12);
+	countElemNuGll_ani.push_back(2);
 	startElemNuGll_ani.push_back(0);
-	countElemNuGll_ani.push_back(gll_ani);
+	countElemNuGll_ani.push_back(nPntEdge);
 	startElemNuGll_ani.push_back(0);
-	countElemNuGll_ani.push_back(gll_ani);
+	countElemNuGll_ani.push_back(nPntEdge);
 
 	// ---------- </DEFINE WRITING OFFSETS> ----------
 
 	// ---------- <DEFINE NETCDF FILE> ----------
 	NetCDF_Writer nc_writer = NetCDF_Writer();	
-	if (XMPI::root()) { //Kuangdai implemented that creation and definition has to be serial
+	if (XMPI::root()) { 
 		
 	std::vector<size_t> dimsElem, dimsElemGll, dimsElemNuGll;
 	
@@ -245,9 +250,9 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	dimsElemGll_ani.push_back(gll_ani);
 	dimsElemGll_ani.push_back(gll_ani);
 	dimsElemNuGll_ani.push_back(elemNus_all);
-	dimsElemNuGll_ani.push_back(12);
-	dimsElemNuGll_ani.push_back(gll_ani);
-	dimsElemNuGll_ani.push_back(gll_ani);
+	dimsElemNuGll_ani.push_back(2); //just use this to test vp
+	dimsElemNuGll_ani.push_back(nPntEdge);
+	dimsElemNuGll_ani.push_back(nPntEdge);
 
 
 	nc_writer.open(mFileName,true);	
@@ -259,6 +264,7 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	nc_writer.defineVariable<Real>("mesh_S", dimsElemGll);
 	nc_writer.defineVariable<Real>("mesh_Z", dimsElemGll);
 	nc_writer.defineVariable<Real>("material_fields", dimsElemNuGll);
+	nc_writer.defineVariable<Real>("vp", dimsElemNuGll_ani);
 
 
 	nc_writer.defModeOff();
@@ -294,6 +300,7 @@ void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parame
 	nc_writer.writeVariableChunk("mesh_S", mesh_S, startElemGll, countElemGll);
 	nc_writer.writeVariableChunk("mesh_Z", mesh_Z, startElemGll, countElemGll);
 	nc_writer.writeVariableChunk("material_fields", materials, startElemNuGll, countElemNuGll);
+	nc_writer.writeVariableChunk("vp", vp, startElemNuGll_ani, countElemNuGll_ani);
 
 
 

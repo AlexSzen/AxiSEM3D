@@ -163,7 +163,7 @@ void ReceiverCollection::release(Domain &domain, const Mesh &mesh) {
 	if (mSaveWavefieldDomain && !mComputeKernels) {
 		
 		bool write = true;
-		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mBufferSizeWvf, write);
+		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mBufferSizeWvf, write, mSrcLat, mSrcLon, mSrcDep);
 		for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {
 			Element *elem = domain.getElement(ielem);
 			if ( elem->needDumping(mRmin,mRmax,mThetaMin,mThetaMax) ) {
@@ -178,7 +178,7 @@ void ReceiverCollection::release(Domain &domain, const Mesh &mesh) {
 		bool write = false;
 		if (mSaveWavefieldDomain) write = true;
 		
-		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mTotalRecordStepsWvf, write);
+		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mTotalRecordStepsWvf, write, mSrcLat, mSrcLon, mSrcDep);
 		
 		for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {
 			Element *elem = domain.getElement(ielem);
