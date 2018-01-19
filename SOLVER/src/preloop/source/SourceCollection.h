@@ -28,9 +28,8 @@ public:
     static void buildInparam(const Parameters &par, int verbose);
     
 private:
-	
-	Source *mSource;
-	std::vector<OffAxisSource *> mOffAxisSources;
+
+	std::vector<Source *> mSources;
 	
 };
 

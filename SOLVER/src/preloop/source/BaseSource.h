@@ -25,20 +25,37 @@ public:
     double getLatitude() const {return mLatitude;};
     double getLongitude() const {return mLongitude;};
     double getDepth() const {return mDepth;};
-    
+	double getThetaSrc() const {return mThetaSrc;};
+	double getPhiSrc() const {return mPhiSrc;};
     
 protected:
-    virtual void computeSourceFourier(const Quad &myQuad, const RDColP &interpFactZ,
+	// on axis
+	virtual void computeSourceFourier(const Quad &myQuad, const RDColP &interpFactZ,
+        arPP_CMatX3 &fouriers) const = 0;
+	
+	// off axis	
+	virtual void computeSourceFourier(const Quad &myQuad, 
 		const RDColP &interpFactXii,
 		const RDColP &interpFactEta,
 		double phi,
-        arPP_CMatX3 &fouriers) const = 0;
+		vec_arPP_CMatX3 &fouriers) const = 0;
         
     double mDepth;
     double mLatitude;
     double mLongitude;
+	
+	// theta and phi in source-centered coordinate system, for off axis source
+	double mThetaSrc;
+	double mPhiSrc;
+	
+	// on/off axis 
+	bool mAxial;
         
 private:
-    bool locate(const Mesh &mesh, int &locTag, RDColP &interpFactZ, RDColP &interpFactXii, RDColP &interpFactEta) const;
+	// on axis
+	bool locate(const Mesh &mesh, int &locTag, RDColP &interpFactZ) const;
+	bool locate(const Mesh &mesh, int &locTag, 
+		RDColP &interpFactXii, RDColP &interpFactEta) const;
+	
 };
 
