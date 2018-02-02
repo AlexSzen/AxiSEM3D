@@ -67,6 +67,8 @@ void DomainIO::initialize(int totalRecordSteps, int recordInterval, int bufferSi
 		mNetCDF->addAttribute("", "source_latitude", mSrcLat);
 		mNetCDF->addAttribute("", "source_longitude", mSrcLon);
 		mNetCDF->addAttribute("", "source_depth", mSrcDep);
+		mNetCDF->addAttribute("", "record_interval", recordInterval);
+
 		mNetCDF->flush();
 		
 		mNetCDF->close();
@@ -81,7 +83,6 @@ void DomainIO::finalize() {
 }
 
 void DomainIO::dumpToFile(const vec_vec_ar6_RMatPP& bufferDisp, const RColX& bufferTime, int bufferLineTime) {
-	
 	mCountTime[0] = bufferLineTime;
 	
 	mNetCDF->writeVariableChunk("time", bufferTime, mStartTime, mCountTime);

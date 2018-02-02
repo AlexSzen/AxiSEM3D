@@ -299,16 +299,18 @@ add_executable(
     src/preloop/physics/material/Material.cpp
     src/preloop/physics/relabelling/Relabelling.cpp
 
+    src/preloop/source/SourceCollection.cpp
     src/preloop/source/Source.cpp
     src/preloop/source/Earthquake.cpp
     src/preloop/source/PointForce.cpp
     src/preloop/source/NullSource.cpp
     src/preloop/source/stf/STF.cpp
+    src/preloop/source/stf/STFCollection.cpp
     src/preloop/source/stf/ErfSTF.cpp
     src/preloop/source/stf/GaussSTF.cpp
     src/preloop/source/stf/RickerSTF.cpp
-	src/preloop/source/offaxis/OffAxisSource.cpp
-	src/preloop/source/offaxis/OffAxisPointForce.cpp
+    src/preloop/source/offaxis/OffAxisSource.cpp
+    src/preloop/source/offaxis/OffAxisPointForce.cpp  
     src/preloop/receiver/Receiver.cpp
     src/preloop/receiver/ReceiverCollection.cpp
     

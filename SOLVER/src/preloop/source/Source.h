@@ -1,7 +1,6 @@
 // Source.h
-// created by Kuangdai on 8-May-2016 
-// base class of source
-// we only consider point sources located on the axis
+//  base class of Source
+// we only consider point Sources located on the axis
 
 #pragma once
 
@@ -15,29 +14,54 @@ class Parameters;
 
 class Source {
 public:
+	// on axis
     Source(double depth = 0., double lat = 90., double lon = 0.);
-    
+    // off axis 
+	Source(double depth, double lat, double lon,
+		double srcLat, double srcLon, double srcDep);
+		
     virtual ~Source() {};
     
-    void release(Domain &domain, const Mesh &mesh) const;
+    void release(Domain &domain, const Mesh &mesh, int isource) const;
     
     virtual std::string verbose() const = 0;
         
     double getLatitude() const {return mLatitude;};
     double getLongitude() const {return mLongitude;};
     double getDepth() const {return mDepth;};
-    
-    static void buildInparam(Source *&src, const Parameters &par, int verbose);
+	
+	//off axis : theta and phi of forward source
+	double getThetaSrc() const {return mThetaSrc;};
+	double getPhiSrc() const {return mPhiSrc;};
     
 protected:
-    virtual void computeSourceFourier(const Quad &myQuad, const RDColP &interpFactZ,
-        arPP_CMatX3 &fouriers) const = 0;
+	
+	// on and off axis	
+	virtual void computeSourceFourier(const Quad &myQuad, 
+		const RDColP &interpFactZ, 
+		const RDColP &interpFactXii,
+		const RDColP &interpFactEta,
+		double phi,
+		arPP_CMatX3 &fouriers) const = 0;
         
     double mDepth;
     double mLatitude;
     double mLongitude;
+	
+	// theta and phi in source-centered coordinate system, for off axis source
+	double mThetaSrc = 0.;
+	double mPhiSrc = 0.;
+	
+	// on/off axis 
+	bool mAxial;
+
         
 private:
-    bool locate(const Mesh &mesh, int &locTag, RDColP &interpFactZ) const;
+	// on axis
+	bool locate(const Mesh &mesh, int &locTag, RDColP &interpFactZ) const;
+	//off axis
+	bool locate(const Mesh &mesh, int &locTag,
+		RDColP &interpFactXii, RDColP &interpFactEta) const;
+	
 };
 

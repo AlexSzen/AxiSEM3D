@@ -11,7 +11,11 @@ public:
     std::string verbose() const;
     
 protected:    
-    void computeSourceFourier(const Quad &myQuad, const RDColP &interpFactZ,
-        arPP_CMatX3 &fouriers) const;
+    void computeSourceFourier(const Quad &myQuad, 
+		const RDColP &interpFactZ, 
+		const RDColP &interpFactXii,
+		const RDColP &interpFactEta,
+		double phi,
+		arPP_CMatX3 &fouriers) const;
 };
 

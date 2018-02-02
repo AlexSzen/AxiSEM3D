@@ -60,7 +60,7 @@ void OffAxisSource::release(Domain &domain, const Mesh &mesh) const {
         // compute OffAxisSource term
         vec_arPP_CMatX3 fouriers;
         const Quad *myQuad = mesh.getQuad(locTag);
-        computeSourceFourier(*myQuad, interpFactXii, interpFactEta, mPhiSrc, fouriers);
+   //     computeSourceFourier(*myQuad, interpFactXii, interpFactEta, mPhiSrc, fouriers);
         // add to domain
         Element *myElem = domain.getElement(myQuad->getElementTag());
 		// TODO: implement this in core

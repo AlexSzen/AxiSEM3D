@@ -100,7 +100,7 @@ public:
 	
 	template<class base_type>
 	void getAttribute(const std::string &vname, 
-		const std::string &attname, base_type attvalue) const {
+		const std::string &attname, base_type &attvalue) const {
 		int varid = -1;
 		int varloc = -1;
 		if (vname == "") {

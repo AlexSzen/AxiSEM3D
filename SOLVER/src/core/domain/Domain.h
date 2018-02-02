@@ -33,7 +33,7 @@ public:
     int addPoint(Point *point);
     int addElement(Element *elem);
     void addSourceTerm(SourceTerm *source) {mSourceTerms.push_back(source);};
-    void setSTF(SourceTimeFunction *stf) {mSTF = stf;};
+    void addSTF(SourceTimeFunction *stf) {mSTFs.push_back(stf);};
     void setPointwiseRecorder(PointwiseRecorder *recorderPW) {mPointwiseRecorder = recorderPW;};
 	void setSurfaceRecorder(SurfaceRecorder *recorderSF) {mSurfaceRecorder = recorderSF;};
 	void setDomainRecorder(DomainRecorder *recorderDM) {mDomainRecorder = recorderDM;};
@@ -43,7 +43,7 @@ public:
     void setLearnParameters(LearnParameters *lpar) {mLearnPar = lpar;};
     void setKerner(Kerner *kerner) {mKerner = kerner;};    
     // get const components
-    const SourceTimeFunction &getSTF() const {return *mSTF;};
+    const SourceTimeFunction &getSTF() const {return *mSTFs[0];};
     int getNumPoints() const {return mPoints.size();};
     int getNumElements() const {return mElements.size();};
     
@@ -107,7 +107,7 @@ private:
     // source 
     std::vector<SourceTerm *> mSourceTerms;
     // source time function
-    SourceTimeFunction *mSTF = 0;
+    std::vector<SourceTimeFunction *> mSTFs;
     // point-wise stations
     PointwiseRecorder *mPointwiseRecorder = 0;
 	// surface wavefield

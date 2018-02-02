@@ -17,8 +17,12 @@ Earthquake::Earthquake(double depth, double lat, double lon,
     // nothing
 }
 
-void Earthquake::computeSourceFourier(const Quad &myQuad, const RDColP &interpFactZ,
-    arPP_CMatX3 &fouriers) const {
+void Earthquake::computeSourceFourier(const Quad &myQuad, 
+	const RDColP &interpFactZ, 
+	const RDColP &interpFactXii,
+	const RDColP &interpFactEta,
+	double phi,
+	arPP_CMatX3 &fouriers) const {
     // set zero
     for (int ipnt = 0; ipnt < nPntElem; ipnt++) {
         fouriers[ipnt] = CMatX3::Zero(3, 3);

@@ -14,7 +14,7 @@ class MeshIO {
 	
 public:	
 	MeshIO(const Mesh *mesh, const std::string &fname); 
-	void dumpFields(const Domain &domain, const Source &source, const Parameters &par);
+	void dumpFields(const Domain &domain, const Parameters &par);
 
 private:
 	const Mesh *mMesh;

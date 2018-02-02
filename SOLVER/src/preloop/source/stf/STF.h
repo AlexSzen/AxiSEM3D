@@ -11,20 +11,25 @@
 class Domain;
 class Parameters;
 
+
 class STF {
+	
+friend class STFCollection; 
+
 public:
     virtual ~STF() {};
 
     void release(Domain &domain) const;
 
     virtual std::string verbose() const = 0;
-
-    static void buildInparam(STF *&stf, const Parameters &par, double dt, int verbose);
     
-    int getSize() const {return mSTF.size();};
+    int getSize() const {return mSTFs.size();};
 
 protected:
     double mDeltaT;
     double mShift;
-    std::vector<double> mSTF;
+    std::vector<double> mSTFs;
+	std::vector<double> mSTFp;
+	std::vector<double> mSTFz;
+
 };

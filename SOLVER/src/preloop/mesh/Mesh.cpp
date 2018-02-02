@@ -149,8 +149,8 @@ void Mesh::buildWeighted() {
     MultilevelTimer::end("Plot at Weighted Phase", 1);
 }
 
-void Mesh::dumpFields(const Domain &domain, const Source &source,const Parameters &par) { 
-    if(mDump) mMeshIO->dumpFields(domain, source, par);	
+void Mesh::dumpFields(const Domain &domain, const Parameters &par) { 
+    if(mDump) mMeshIO->dumpFields(domain, par);	
 }
 
 void Mesh::release(Domain &domain) {

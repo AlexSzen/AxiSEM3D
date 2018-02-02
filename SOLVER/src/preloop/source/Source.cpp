@@ -1,18 +1,19 @@
 // Source.cpp
-// created by Kuangdai on 8-May-2016
 // base class of source
-// we only consider point sources located on the axis
+// sources can be on or off axis 
 
 #include "Source.h"
 #include "Quad.h"
 #include "Domain.h"
 #include "Element.h"
 #include "SourceTerm.h"
+#include "SourceTerm.h"
 #include "Mesh.h"
 #include "XMath.h"
 #include "SpectralConstants.h"
 #include "XMPI.h"
 #include "MultilevelTimer.h"
+#include "Geodesy.h"
 
 Source::Source(double depth, double lat, double lon):
 mDepth(depth), mLatitude(lat), mLongitude(lon) {
@@ -25,37 +26,97 @@ mDepth(depth), mLatitude(lat), mLongitude(lon) {
         mLatitude = -90.;
         mLongitude = 0.;
     }
+	
+	mAxial = true;
+
 }
 
-void Source::release(Domain &domain, const Mesh &mesh) const {
+Source::Source(double depth, double lat, double lon,
+	double srcLat, double srcLon, double srcDep):
+mDepth(depth), mLatitude(lat), mLongitude(lon) {
+    // handle singularity at poles
+    if (std::abs(mLatitude - 90.) < tinyDouble) {
+        mLatitude = 90.;
+        mLongitude = 0.;
+    }
+    if (std::abs(mLatitude + 90.) < tinyDouble) {
+        mLatitude = -90.;
+        mLongitude = 0.;
+    }
+	// compute theta and phi in source-centered coordinate system
+	RDCol3 rtpG, rtpS;
+	rtpG(0) = 1.;
+	rtpG(1) = Geodesy::lat2Theta_d(mLatitude, mDepth);
+	rtpG(2) = Geodesy::lon2Phi(mLongitude);
+	rtpS = Geodesy::rotateGlob2Src(rtpG, srcLat, srcLon, srcDep);
+    mThetaSrc = rtpS(1);
+    mPhiSrc = rtpS(2);
+	
+	mAxial = false;
+	
+}
+
+
+void Source::release(Domain &domain, const Mesh &mesh, int isource) const {
     MultilevelTimer::begin("Locate Source", 2);
-    // locate local
-    int myrank = XMPI::nproc();
-    int locTag;
-    RDColP interpFactZ;
-    if (locate(mesh, locTag, interpFactZ)) {
-        myrank = XMPI::rank();
-    }
+	
+	if (mAxial) { // on axis 
+	    // locate local
+	    int myrank = XMPI::nproc();
+	    int locTag;
+	    RDColP interpFactZ, interpFactXii, interpFactEta;
+	    if (locate(mesh, locTag, interpFactZ)) {
+	        myrank = XMPI::rank();
+	    }
 
-    // min recRank
-    int myrank_min = XMPI::min(myrank);
-    if (myrank_min == XMPI::nproc()) {
-        throw std::runtime_error("Source::release || Error locating source.");
-    }
-    MultilevelTimer::end("Locate Source", 2);
+	    // min recRank
+	    int myrank_min = XMPI::min(myrank);
+	    if (myrank_min == XMPI::nproc()) {
+	        throw std::runtime_error("Source::release || Error locating source.");
+	    }
+	    MultilevelTimer::end("Locate Source", 2);
 
-    MultilevelTimer::begin("Compute Source", 2);
-    // release to me
-    if (myrank_min == XMPI::rank()) {
-        // compute source term
-        arPP_CMatX3 fouriers;
-        const Quad *myQuad = mesh.getQuad(locTag);
-        computeSourceFourier(*myQuad, interpFactZ, fouriers);
-        // add to domain
-        Element *myElem = domain.getElement(myQuad->getElementTag());
-        domain.addSourceTerm(new SourceTerm(myElem, fouriers));
-    }
-    MultilevelTimer::end("Compute Source", 2);
+	    MultilevelTimer::begin("Compute Source", 2);
+	    // release to me
+	    if (myrank_min == XMPI::rank()) {
+	        // compute source term
+	        arPP_CMatX3 fouriers;
+	        const Quad *myQuad = mesh.getQuad(locTag);
+	        computeSourceFourier(*myQuad, interpFactZ, interpFactXii, interpFactEta, mPhiSrc, fouriers);
+	        // add to domain
+	        Element *myElem = domain.getElement(myQuad->getElementTag());
+	        domain.addSourceTerm(new SourceTerm(myElem, fouriers, isource));
+	    }
+	    MultilevelTimer::end("Compute Source", 2);
+	} else { // off axis
+		// locate local
+		int myrank = XMPI::nproc();
+		int locTag;
+		RDColP interpFactZ, interpFactXii, interpFactEta;
+		if (locate(mesh, locTag, interpFactXii, interpFactEta)) {
+			myrank = XMPI::rank();
+		}
+
+		// min recRank
+		int myrank_min = XMPI::min(myrank);
+		if (myrank_min == XMPI::nproc()) {
+			throw std::runtime_error("OffAxisSource::release || Error locating off-axis source.");
+		}
+		MultilevelTimer::end("Locate Off-axis Source", 2);
+
+		MultilevelTimer::begin("Compute Off-axis Source", 2);
+		// release to me
+		if (myrank_min == XMPI::rank()) {
+			// compute OffAxisSource term
+			arPP_CMatX3 fouriers;
+			const Quad *myQuad = mesh.getQuad(locTag);
+			computeSourceFourier(*myQuad, interpFactZ, interpFactXii, interpFactEta, mPhiSrc, fouriers);
+			// add to domain
+			Element *myElem = domain.getElement(myQuad->getElementTag());
+	        domain.addSourceTerm(new SourceTerm(myElem, fouriers, isource));
+		}
+		MultilevelTimer::end("Compute Off-axis Source", 2);
+	}
 }
 
 bool Source::locate(const Mesh &mesh, int &locTag, RDColP &interpFactZ) const {
@@ -93,110 +154,45 @@ bool Source::locate(const Mesh &mesh, int &locTag, RDColP &interpFactZ) const {
     return false;
 }
 
-#include "Parameters.h"
-#include "Earthquake.h"
-#include "PointForce.h"
-#include "NullSource.h"
-#include <fstream>
-#include <boost/algorithm/string.hpp>
 
-void Source::buildInparam(Source *&src, const Parameters &par, int verbose) {
-    if (src) {
-        delete src;
+bool Source::locate(const Mesh &mesh, int &locTag, 
+	RDColP &interpFactXii, RDColP &interpFactEta) const {
+    MultilevelTimer::begin("R OffAxisSource", 3);
+    RDCol2 srcCrds = RDCol2::Zero();
+    double r = mesh.computeRadiusRef(mDepth, mLatitude, mLongitude);
+	srcCrds(0) = r * sin(mThetaSrc);
+	srcCrds(1) = r * cos(mThetaSrc);
+    MultilevelTimer::end("R OffAxisSource", 3);
+
+    // check range of subdomain
+    if (srcCrds(0) > mesh.sMax() + tinySingle || srcCrds(0) < mesh.sMin() - tinySingle) {
+        return false;
     }
-
-    // null source
-    if (par.getValue<bool>("DEVELOP_NON_SOURCE_MODE")) {
-        src = new NullSource();
-        if (verbose) {
-            XMPI::cout << src->verbose();
+    if (srcCrds(1) > mesh.zMax() + tinySingle || srcCrds(1) < mesh.zMin() - tinySingle) {
+        return false;
+    }
+    // find host element
+    RDCol2 srcXiEta;
+    for (int iloc = 0; iloc < mesh.getNumQuads(); iloc++) {
+        const Quad *quad = mesh.getQuad(iloc);
+        if (quad->isFluid() || !quad->nearMe(srcCrds(0), srcCrds(1))) {
+            continue;
         }
-        return;
-    }
-
-    std::string src_type = par.getValue<std::string>("SOURCE_TYPE");
-    std::string src_file = par.getValue<std::string>("SOURCE_FILE");
-
-    if (boost::iequals(src_type, "earthquake")) {
-        std::string cmtfile = Parameters::sInputDirectory + "/" + src_file;
-        double depth, lat, lon;
-        double Mrr, Mtt, Mpp, Mrt, Mrp, Mtp;
-        if (XMPI::root()) {
-            std::fstream fs(cmtfile, std::fstream::in);
-            if (!fs) {
-                throw std::runtime_error("Source::buildInparam || "
-                    "Error opening CMT data file: ||" + cmtfile);
+        if (quad->invMapping(srcCrds, srcXiEta)) {
+            if (std::abs(srcXiEta(0)) <= 1.000001 && std::abs(srcXiEta(1)) <= 1.000001) {
+                locTag = iloc;
+				XMath::interpLagrange(srcXiEta(0), nPntEdge,
+                    (quad->isAxial() ? SpectralConstants::getP_GLJ().data()
+								     : SpectralConstants::getP_GLL().data()), 
+					interpFactXii.data());
+                XMath::interpLagrange(srcXiEta(1), nPntEdge,
+                    SpectralConstants::getP_GLL().data(), interpFactEta.data());
+                return true;
             }
-            std::string junk;
-            std::getline(fs, junk);
-            std::getline(fs, junk);
-            std::getline(fs, junk);
-            std::getline(fs, junk);
-            fs >> junk >> lat;
-            fs >> junk >> lon;
-            fs >> junk >> depth;
-            fs >> junk >> Mrr;
-            fs >> junk >> Mtt;
-            fs >> junk >> Mpp;
-            fs >> junk >> Mrt;
-            fs >> junk >> Mrp;
-            fs >> junk >> Mtp;
-            depth *= 1e3;
-            Mrr *= 1e-7;
-            Mtt *= 1e-7;
-            Mpp *= 1e-7;
-            Mrt *= 1e-7;
-            Mrp *= 1e-7;
-            Mtp *= 1e-7;
-            fs.close();
         }
-        XMPI::bcast(depth);
-        XMPI::bcast(lat);
-        XMPI::bcast(lon);
-        XMPI::bcast(Mrr);
-        XMPI::bcast(Mtt);
-        XMPI::bcast(Mpp);
-        XMPI::bcast(Mrt);
-        XMPI::bcast(Mrp);
-        XMPI::bcast(Mtp);
-        src = new Earthquake(depth, lat, lon, Mrr, Mtt, Mpp, Mrt, Mrp, Mtp);
-    } else if (boost::iequals(src_type, "point_force")) {
-        // point force
-        std::string pointffile = Parameters::sInputDirectory + "/" + src_file;
-        double depth, lat, lon;
-        double f1, f2, f3;
-        if (XMPI::root()) {
-            std::fstream fs(pointffile, std::fstream::in);
-            if (!fs) {
-                throw std::runtime_error("Source::buildInparam || "
-                    "Error opening point force data file: ||" + pointffile);
-            }
-            std::string junk;
-            std::getline(fs, junk);
-            std::getline(fs, junk);
-            std::getline(fs, junk);
-            std::getline(fs, junk);
-            fs >> junk >> lat;
-            fs >> junk >> lon;
-            fs >> junk >> depth;
-            fs >> junk >> f1;
-            fs >> junk >> f2;
-            fs >> junk >> f3;
-            depth *= 1e3;
-            fs.close();
-        }
-        XMPI::bcast(depth);
-        XMPI::bcast(lat);
-        XMPI::bcast(lon);
-        XMPI::bcast(f1);
-        XMPI::bcast(f2);
-        XMPI::bcast(f3);
-        src = new PointForce(depth, lat, lon, f1, f2, f3);
-    } else {
-         throw std::runtime_error("Source::buildInparam || Unknown source type: " + src_type);
     }
-    
-    if (verbose) {
-        XMPI::cout << src->verbose();
-    }
+    return false;
 }
+
+
+

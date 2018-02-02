@@ -13,8 +13,12 @@ std::string NullSource::verbose() const {
     return ss.str();
 }
 
-void NullSource::computeSourceFourier(const Quad &myQuad, const RDColP &interpFactZ,
-    arPP_CMatX3 &fouriers) const {
+void NullSource::computeSourceFourier(const Quad &myQuad, 
+	const RDColP &interpFactZ, 
+	const RDColP &interpFactXii,
+	const RDColP &interpFactEta,
+	double phi,
+	arPP_CMatX3 &fouriers) const {
     // just initialize as zero
     for (int ipnt = 0; ipnt < nPntElem; ipnt++) {
         fouriers[ipnt] = CMatX3::Zero(0, 3);

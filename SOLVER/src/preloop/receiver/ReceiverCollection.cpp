@@ -177,7 +177,7 @@ void ReceiverCollection::release(Domain &domain, const Mesh &mesh) {
 		
 		bool write = false;
 		if (mSaveWavefieldDomain) write = true;
-		
+		// if kernels we want the whole wavefield in memory so buffer size = total record steps
 		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mTotalRecordStepsWvf, write, mSrcLat, mSrcLon, mSrcDep);
 		
 		for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {

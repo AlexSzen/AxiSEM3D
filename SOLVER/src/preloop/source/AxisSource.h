@@ -29,9 +29,7 @@ public:
     
     
 protected:
-    virtual void computeSourceFourier(const Quad &myQuad, const RDColP &interpFactZ,
-        arPP_CMatX3 &fouriers) const = 0;
-        
+
     double mDepth;
     double mLatitude;
     double mLongitude;

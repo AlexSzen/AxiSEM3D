@@ -17,16 +17,22 @@ class Element;
 
 class SourceTerm {
 public:
-    SourceTerm(Element *element, const arPP_CMatX3 &force);
+    SourceTerm(Element *element, const arPP_CMatX3 &force, int isource);
     
     // apply source at a time step 
-    void apply(Real stf);
+    void apply(Real stfs, Real stfp, Real stfz);
     
     void setElement(Element *element) {mElement = element;};
+	
+	int getNumSource() {return mISource;}; // get the source number to know which stf to apply
     
 private:
     
     Element *mElement;
     arPP_CMatX3 mForce;
     arPP_CMatX3 mForceXSTF;
+	
+	// because we can have many sources with many stfs,
+	// to which source does this term belong 
+	int mISource;
 };

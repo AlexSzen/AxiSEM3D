@@ -26,18 +26,13 @@ public:
     double getLatitude() const {return mLatitude;};
     double getLongitude() const {return mLongitude;};
     double getDepth() const {return mDepth;};
-	double getThataSrc() const {return mThetaSrc;};
+	double getThetaSrc() const {return mThetaSrc;};
 	double getPhiSrc() const {return mPhiSrc;};
     
     static void buildInparam(std::vector<OffAxisSource> *&offsrc, 
 		const Parameters &par, int verbose);
     
 protected:
-    virtual void computeSourceFourier(const Quad &myQuad, 
-		const RDColP &interpFactXii,
-		const RDColP &interpFactEta,
-		double phi,
-        vec_arPP_CMatX3 &fouriers) const = 0;
         
     double mDepth;
     double mLatitude;

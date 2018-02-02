@@ -11,7 +11,7 @@
 #include <cstdio>
 #include "PointwiseRecorder.h"
 
-void PointwiseIONetCDF::initialize(int totalRecordSteps, int bufferSize, 
+void PointwiseIONetCDF::initialize(int totalRecordSteps, int recordInterval, int bufferSize, 
 	const std::string &components, const std::vector<PointwiseInfo> &receivers,
 	double srcLat, double srcLon, double srcDep) {
 	mReceivers = &receivers;
@@ -75,6 +75,7 @@ void PointwiseIONetCDF::initialize(int totalRecordSteps, int bufferSize,
 			mNetCDF->addAttribute(mVarNames[irec], "latitude", mylats[irec]);
 			mNetCDF->addAttribute(mVarNames[irec], "longitude", mylons[irec]);
 			mNetCDF->addAttribute(mVarNames[irec], "depth", mydeps[irec]);
+
         }
         mNetCDF->defModeOff();
         // fill time with err values
@@ -87,6 +88,8 @@ void PointwiseIONetCDF::initialize(int totalRecordSteps, int bufferSize,
 		mNetCDF->addAttribute("", "source_latitude", mSrcLat);
 		mNetCDF->addAttribute("", "source_longitude", mSrcLon);
 		mNetCDF->addAttribute("", "source_depth", mSrcDep);
+		mNetCDF->addAttribute("", "record_interval", recordInterval);
+
         mNetCDF->flush();
     #else
         // gather all station names 
@@ -113,6 +116,7 @@ void PointwiseIONetCDF::initialize(int totalRecordSteps, int bufferSize,
 					mNetCDF->addAttribute(allNames[iproc][irec], "latitude", allLats[iproc][irec]);
 					mNetCDF->addAttribute(allNames[iproc][irec], "longitude", allLons[iproc][irec]);
 					mNetCDF->addAttribute(allNames[iproc][irec], "depth", allDeps[iproc][irec]);
+
                 }
             }
             mNetCDF->defModeOff();
@@ -128,6 +132,8 @@ void PointwiseIONetCDF::initialize(int totalRecordSteps, int bufferSize,
 			mNetCDF->addAttribute("", "source_latitude", mSrcLat);
 			mNetCDF->addAttribute("", "source_longitude", mSrcLon);
 			mNetCDF->addAttribute("", "source_depth", mSrcDep);
+			mNetCDF->addAttribute("", "record_interval", recordInterval);
+
             mNetCDF->close();
         }
         XMPI::barrier();
@@ -248,7 +254,7 @@ void PointwiseIONetCDF::dumpToFile(const RMatXX_RM &bufferDisp,
     if (bufferLine == 0) {
         return;
     }
-    
+	
     // write time
     std::vector<size_t> start;
     std::vector<size_t> count;
@@ -278,11 +284,11 @@ void PointwiseIONetCDF::dumpToFile(const RMatXX_RM &bufferDisp,
     #ifndef NDEBUG
         Eigen::internal::set_is_malloc_allowed(false);
     #endif
-    
+	
     // flush to disk
-    mNetCDF->flush();
-    
+    //mNetCDF->flush(); NETCDF FLUSH MAKES THE PROGRAM HANG FOR SOME REASON. ok seems to be wrong anyway ... 
     // record postion in nc file
     mCurrentRow += bufferLine;
+
 }
 

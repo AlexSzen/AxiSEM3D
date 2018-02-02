@@ -42,18 +42,13 @@ int axisem_main(int argc, char *argv[]) {
         MultilevelTimer::begin("Build NrField", 0);
         NrField::buildInparam(pl.mNrField, *(pl.mParameters), verbose);
         MultilevelTimer::end("Build NrField", 0);
-        
-        //////// source
-        MultilevelTimer::begin("Build Source", 0);
-        Source::buildInparam(pl.mSource, *(pl.mParameters), verbose);
-        double srcLat = pl.mSource->getLatitude();
-        double srcLon = pl.mSource->getLongitude();
-        double srcDep = pl.mSource->getDepth();
-        MultilevelTimer::end("Build Source", 0);
 		
-		MultilevelTimer::begin("Build Off Axis Source", 0);
-	//	OffAxisSourceCollection::buildInparam(pl.mOffAxisSourceCollection, *(pl.mParameters), verbose);
-		MultilevelTimer::end("Build Off Axis Source", 0);
+		MultilevelTimer::begin("Build Sources", 0);
+		SourceCollection::buildInparam(pl.mSources, *(pl.mParameters), verbose);
+		double srcLat = pl.mSources->getLatitude();
+		double srcLon = pl.mSources->getLongitude();
+		double srcDep = pl.mSources->getDepth();
+		MultilevelTimer::end("Build Sources", 0);
         
         //////// 3D models 
         MultilevelTimer::begin("Build 3D Models", 0);
@@ -115,21 +110,21 @@ int axisem_main(int argc, char *argv[]) {
         // pl.mMesh->test();
         // XMPI::barrier();
         // exit(0);
-        
-        //////// source time function 
-        MultilevelTimer::begin("Build Source Time Function", 0);
-        STF::buildInparam(pl.mSTF, *(pl.mParameters), dt, verbose);
-        MultilevelTimer::end("Build Source Time Function", 0);
-        
+		
+		//////// source time functions
+		MultilevelTimer::begin("Build Source Time Functions", 0);
+		STFCollection::buildInparam(pl.mSTFs, *(pl.mParameters), dt, verbose);
+		MultilevelTimer::end("Build Source Time Functions", 0);
+
         //////// receivers
         MultilevelTimer::begin("Build Receivers", 0);
         ReceiverCollection::buildInparam(pl.mReceivers, *(pl.mParameters), 
-            srcLat, srcLon, srcDep, pl.mSTF->getSize(), verbose);
+            srcLat, srcLon, srcDep, pl.mSTFs->getSize(), verbose);
         MultilevelTimer::end("Build Receivers", 0);    
 		
 		//////// Kernels 
 		MultilevelTimer::begin("Build Kernels", 0);
-		Kernels::buildInparam(pl.mKernels, *(pl.mParameters), pl.mSTF->getSize(), verbose);
+		Kernels::buildInparam(pl.mKernels, *(pl.mParameters), pl.mSTFs->getSize(), verbose);
 		MultilevelTimer::end("Build Kernels", 0);
         
         //////// computational domain
@@ -140,24 +135,21 @@ int axisem_main(int argc, char *argv[]) {
         MultilevelTimer::begin("Release Mesh", 1);
         pl.mMesh->release(*(sv.mDomain));
         MultilevelTimer::end("Release Mesh", 1);
-        
-        // release source 
-        MultilevelTimer::begin("Release Source", 1);
-        pl.mSource->release(*(sv.mDomain), *(pl.mMesh));
-        MultilevelTimer::end("Release Source", 1);
-        
-		MultilevelTimer::begin("Release Source", 1);
-	//	pl.mOffAxisSourceCollection->release(*(sv.mDomain), *(pl.mMesh));
-		MultilevelTimer::end("Release Source", 1);
-		
-        // release stf 
-        MultilevelTimer::begin("Release STF", 1);
-        pl.mSTF->release(*(sv.mDomain));
-        MultilevelTimer::end("Release STF", 1);        
 
+		MultilevelTimer::begin("Release Sources", 1);
+		pl.mSources->release(*(sv.mDomain), *(pl.mMesh));
+		MultilevelTimer::end("Release Sources", 1);
+		
+		// release stfs 
+		MultilevelTimer::begin("Release STFs", 1);
+		pl.mSTFs->release(*(sv.mDomain));
+		MultilevelTimer::end("Release STFs", 1);      
+
+		// dump mesh quantities 
 		MultilevelTimer::begin("Dump mesh quantities",1);
-		pl.mMesh->dumpFields(*(sv.mDomain), *(pl.mSource),*(pl.mParameters));
+		pl.mMesh->dumpFields(*(sv.mDomain), *(pl.mParameters));
 		MultilevelTimer::end("Dump mesh quantities",1);
+		
         // release receivers
         MultilevelTimer::begin("Release Receivers", 1);
         pl.mReceivers->release(*(sv.mDomain), *(pl.mMesh));

@@ -6,7 +6,7 @@
 #include "Parameters.h"
 #include "PointwiseRecorder.h"
 
-void PointwiseIOAscii::initialize(int totalRecordSteps, int bufferSize, 
+void PointwiseIOAscii::initialize(int totalRecordSteps, int recordInterval, int bufferSize, 
 	const std::string &components, const std::vector<PointwiseInfo> &receivers,
 	double srcLat, double srcLon, double srcDep) {
     // number

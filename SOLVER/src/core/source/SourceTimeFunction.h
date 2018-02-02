@@ -10,15 +10,21 @@
 
 class SourceTimeFunction {
 public:
-    SourceTimeFunction(const std::vector<Real> &stf, Real dt, Real shift);
+    SourceTimeFunction(const std::vector<Real> &stfs, const std::vector<Real> &stfp, const std::vector<Real> &stfz, Real dt, Real shift);
     
-    int getSize() const {return mSTF.size();};
-    Real getFactor(int tstep) const {return mSTF[tstep];};
+    int getSize() const {return mSTFs.size();};
+    Real getFactorS(int tstep) const {return mSTFs[tstep];};
+	Real getFactorP(int tstep) const {return mSTFp[tstep];};
+	Real getFactorZ(int tstep) const {return mSTFz[tstep];};
+
     Real getDeltaT() const {return mDeltaT;};
     Real getShift() const {return mShift;};
     
 private:
-    std::vector<Real> mSTF;
+    std::vector<Real> mSTFs;
+	std::vector<Real> mSTFp;
+	std::vector<Real> mSTFz;
+
     Real mDeltaT;
     Real mShift;
 };

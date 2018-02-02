@@ -15,11 +15,10 @@
 #include "Volumetric3D.h"
 #include "Geometric3D.h"
 #include "OceanLoad3D.h"
-//#include "OffAxisSource.h"
-#include "Source.h"
+#include "SourceCollection.h"
 #include "Mesh.h"
 #include "AttBuilder.h"
-#include "STF.h"
+#include "STFCollection.h"
 #include "ReceiverCollection.h"
 #include "Kernels.h"
 // solver
@@ -34,11 +33,10 @@ struct PreloopVariables {
     std::vector<Volumetric3D *> mVolumetric3D;
     std::vector<Geometric3D *> mGeometric3D;
     OceanLoad3D *mOceanLoad3D = 0;
-//	OffAxisSourceCollection *mOffAxisSourceCollection = 0; 
-    Source *mSource = 0;
+	SourceCollection *mSources = 0;
     Mesh *mMesh = 0;
     AttBuilder *mAttBuilder = 0;
-    STF *mSTF = 0;
+	STFCollection *mSTFs = 0;
     ReceiverCollection *mReceivers = 0;
 	Kernels *mKernels = 0;
     
@@ -53,10 +51,10 @@ struct PreloopVariables {
         for (const auto &m: mGeometric3D) delete m;
         mGeometric3D.clear();
         if (mOceanLoad3D) {delete mOceanLoad3D; mOceanLoad3D = 0;}
-        if (mSource) {delete mSource; mSource = 0;}
+		if (mSources) {delete mSources; mSources = 0;}
         if (mMesh) {delete mMesh; mMesh = 0;}
         if (mAttBuilder) {delete mAttBuilder; mAttBuilder = 0;}
-        if (mSTF) {delete mSTF; mSTF = 0;}
+		if (mSTFs) {delete mSTFs; mSTFs = 0;}
         if (mReceivers) {delete mReceivers; mReceivers = 0;}
 		if (mKernels) {delete mKernels; mKernels = 0;}
     };

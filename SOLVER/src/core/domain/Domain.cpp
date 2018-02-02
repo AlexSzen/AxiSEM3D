@@ -30,10 +30,10 @@ Domain::~Domain() {
     for (const auto &e: mPoints) {delete e;}
     for (const auto &e: mElements) {delete e;}
     for (const auto &e: mSourceTerms) {delete e;}
+	for (const auto &e: mSTFs) {delete e;}
     if (mPointwiseRecorder) {delete mPointwiseRecorder;};
 	if (mSurfaceRecorder) {delete mSurfaceRecorder;};
 	if (mDomainRecorder) {delete mDomainRecorder;};
-    if (mSTF) {delete mSTF;}
     if (mMsgInfo) {delete mMsgInfo;}
     if (mMsgBuffer) {delete mMsgBuffer;}
     if (mLearnPar) {delete mLearnPar;}
@@ -93,9 +93,14 @@ void Domain::applySource(int tstep) const {
         mTimerElemts->resume();
     #endif
     
-    Real stf = mSTF->getFactor(tstep);
     for (const auto &source: mSourceTerms) {
-        source->apply(stf);
+		
+		int isource = source->getNumSource();
+		Real stfs = mSTFs[isource]->getFactorS(tstep);
+		Real stfp = mSTFs[isource]->getFactorP(tstep);
+		Real stfz = mSTFs[isource]->getFactorZ(tstep);
+
+        source->apply(stfs, stfp, stfz);
     }
     
     #ifdef _MEASURE_TIMELOOP

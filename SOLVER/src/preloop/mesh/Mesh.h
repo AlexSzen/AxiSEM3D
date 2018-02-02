@@ -52,7 +52,7 @@ public:
     void release(Domain &domain);  
 	
 	//optional : dump stuff for animation and kernels (connectivity, coordinates, model, etc)
-	void dumpFields(const Domain &domain, const Source &source, const Parameters &par);  
+	void dumpFields(const Domain &domain, const Parameters &par);  
     
     // optional step: test stiffness and mass
     void test();

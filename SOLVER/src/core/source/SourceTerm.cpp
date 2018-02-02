@@ -12,8 +12,8 @@
 #include "Element.h"
 #include "Point.h"
 
-SourceTerm::SourceTerm(Element *element, const arPP_CMatX3 &force):
-mElement(element) {
+SourceTerm::SourceTerm(Element *element, const arPP_CMatX3 &force, int isource):
+mElement(element), mISource(isource) {
     // make the order consistent
     for (int i = 0; i < nPntElem; i++) {
         int length = mElement->getPoint(i)->getNu() + 1;
@@ -26,10 +26,14 @@ mElement(element) {
     mForceXSTF = mForce;
 }
 
-void SourceTerm::apply(Real stf) {
+void SourceTerm::apply(Real stfs, Real stfp, Real stfz) {
     // using mForceXSTF avoids dynamic allocation
     for (int i = 0; i < nPntElem; i++) {
-        mForceXSTF[i] = mForce[i] * stf;
+		for (int inu = 0; inu < mForce[i].rows(); inu++) {
+        	mForceXSTF[i](inu, 0) = mForce[i](inu, 0) * stfs;
+			mForceXSTF[i](inu, 1) = mForce[i](inu, 1) * stfp;
+			mForceXSTF[i](inu, 2) = mForce[i](inu, 2) * stfz;
+		}
     }
     mElement->addSourceTerm(mForceXSTF);
 }

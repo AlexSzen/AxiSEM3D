@@ -17,7 +17,7 @@ MeshIO::MeshIO(const Mesh *mesh, const std::string &fname): mMesh(mesh), mFileNa
 }
 
 
-void MeshIO::dumpFields(const Domain &domain, const Source &source, const Parameters &par) {
+void MeshIO::dumpFields(const Domain &domain, const Parameters &par) {
 	
 	// ---------- <GET PARAMETERS> ----------
 	double rmin = par.getValue<double>("RMIN")*1e3;

@@ -16,7 +16,10 @@ mHalfDuration(hdur), mDecay(decay) {
     int nStep = nStepBeforeZero + nStepAfterZero;
     for (int i = 0; i <= nStep; i++) {
         double t = -mShift + i * mDeltaT;
-        mSTF.push_back(exp(-pow((mDecay / mHalfDuration * t), 2.)) * mDecay / (mHalfDuration * sqrt(pi)));
+        mSTFs.push_back(exp(-pow((mDecay / mHalfDuration * t), 2.)) * mDecay / (mHalfDuration * sqrt(pi)));
+		mSTFp.push_back(exp(-pow((mDecay / mHalfDuration * t), 2.)) * mDecay / (mHalfDuration * sqrt(pi)));
+		mSTFz.push_back(exp(-pow((mDecay / mHalfDuration * t), 2.)) * mDecay / (mHalfDuration * sqrt(pi)));
+   
     }
 }
 
@@ -24,9 +27,9 @@ std::string GaussSTF::verbose() const {
     std::stringstream ss;
     ss << "\n=================== Source Time Function ===================" << std::endl;
     ss << "  Time Step               =   " << mDeltaT << std::endl;
-    ss << "  Number of Steps         =   " << mSTF.size() << std::endl;
-    ss << "  Total Duration          =   " << mDeltaT * mSTF.size() << std::endl;
-    ss << "  Duration after Origin   =   " << mDeltaT * mSTF.size() - mShift << std::endl;
+    ss << "  Number of Steps         =   " << mSTFs.size() << std::endl;
+    ss << "  Total Duration          =   " << mDeltaT * mSTFs.size() << std::endl;
+    ss << "  Duration after Origin   =   " << mDeltaT * mSTFs.size() - mShift << std::endl;
     ss << "  Shift before Origin     =   " << mShift << std::endl;
     ss << "  Time Series Type        =   Gaussian" << std::endl;
     ss << "  Half Duration           =   " << mHalfDuration << std::endl;

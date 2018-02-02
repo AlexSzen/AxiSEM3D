@@ -38,7 +38,7 @@ void PointwiseRecorder::initialize() {
         networks.push_back(rec.mNetwork);
     }
     for (const auto &io: mIOs) {
-        io->initialize(mTotalRecordSteps, mBufferSize, mComponents, mPointwiseInfo,
+        io->initialize(mTotalRecordSteps, mRecordInterval, mBufferSize, mComponents, mPointwiseInfo,
 			mSrcLat, mSrcLon, mSrcDep);
     }
 }
