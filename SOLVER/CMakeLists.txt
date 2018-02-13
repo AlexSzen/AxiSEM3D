@@ -140,11 +140,12 @@ include_directories(
     src/core/newmark
     src/core/Kernels
     src/core/Kernels/fftw
-    src/core/Kernels/Processing
+
     ############################## preloop ##############################
     src/preloop
     src/preloop/utilities
     src/preloop/utilities/netcdf
+    src/preloop/utilities/Processing
     src/preloop/spectral
     src/preloop/spectral/mapping
 
@@ -256,7 +257,7 @@ add_executable(
     src/core/Kernels/fftw/KernerFFTW_N3.cpp
     src/core/Kernels/fftw/KernerFFTW_N6.cpp
     src/core/Kernels/fftw/KernerFFTW_N9.cpp
-    src/core/Kernels/Processing/Processor.cpp
+
     ############################## preloop ##############################
     src/preloop/utilities/XMath.cpp
     src/preloop/utilities/Geodesy.cpp
@@ -264,10 +265,12 @@ add_executable(
     src/preloop/utilities/Parameters.cpp
     src/preloop/utilities/PreloopGradient.cpp
     src/preloop/utilities/PreloopFFTW.cpp
+    src/preloop/utilities/PreloopFFTW_time.cpp
     src/preloop/utilities/MultilevelTimer.cpp
     src/preloop/utilities/netcdf/NetCDF_Reader.cpp
     src/preloop/utilities/netcdf/NetCDF_ReaderAscii.cpp
     src/preloop/utilities/netcdf/NetCDF_Writer.cpp
+    src/preloop/utilities/Processing/Processor.cpp
 
     src/preloop/spectral/SpectralConstants.cpp
     src/preloop/spectral/mapping/Mapping.cpp
@@ -309,7 +312,7 @@ add_executable(
     src/preloop/source/stf/ErfSTF.cpp
     src/preloop/source/stf/GaussSTF.cpp
     src/preloop/source/stf/RickerSTF.cpp
-    src/preloop/source/offaxis/OffAxisSource.cpp
+    src/preloop/source/stf/SeismogramSTF.cpp
     src/preloop/source/offaxis/OffAxisPointForce.cpp  
     src/preloop/receiver/Receiver.cpp
     src/preloop/receiver/ReceiverCollection.cpp

@@ -248,13 +248,17 @@ void SolidElement::feedDispOnSide(int side, CMatXX_RM &buffer, int row) const {
 }
 
 const vec_ar3_CMatPP& SolidElement::getDisp() const {
+	
+  // setup static
+  sResponse.setNr(mMaxNr);	
+  
   int ipnt = 0;
   for (int ipol = 0; ipol <= nPol; ipol++) {
       for (int jpol = 0; jpol <= nPol; jpol++) {
           mPoints[ipnt++]->scatterDisplToElement(sResponse.mDispl, ipol, jpol, mMaxNu);
+  	  }
   }
-}
-return sResponse.mDispl;
+  return sResponse.mDispl;
 }
 
 std::string SolidElement::verbose() const {

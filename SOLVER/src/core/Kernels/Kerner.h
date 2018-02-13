@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "eigenc.h"
+#include "MultilevelTimer.h"
 
 class DomainRecorder;
 class KernerElement;
@@ -24,7 +25,7 @@ public:
 	void setDomainRecorder(DomainRecorder *recorderDM) {mDomainRecorder = recorderDM;};
 	void addKernerElement(KernerElement *kerElem) {mKerElements.push_back(kerElem);};
 	//int getSize() {return mKerElements.size();};
-	void computeKernels();
+	void computeKernels( int verbose );
 	const int getNumElements() const {return mKerElements.size();};
 	
 private:
@@ -54,4 +55,8 @@ private:
 	
 	// windowing 
 	Real mBegWin, mEndWin;
+	
+	#ifdef _MEASURE_TIMELOOP
+		MyBoostTimer *mTimerKernels;
+	 #endif
 };

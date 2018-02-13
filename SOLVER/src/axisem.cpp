@@ -194,7 +194,7 @@ int axisem_main(int argc, char *argv[]) {
 		sv.mDomain->initializeKerner();
 
 		/////// compute kernels 
-		sv.mDomain->computeKernels();
+		sv.mDomain->computeKernels( verbose );
 		
         //////// finalize solver
         // solver 

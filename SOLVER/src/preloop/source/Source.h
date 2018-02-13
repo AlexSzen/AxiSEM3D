@@ -1,6 +1,6 @@
 // Source.h
-//  base class of Source
-// we only consider point Sources located on the axis
+// base class of Source
+// modified for on and off axis sources 
 
 #pragma once
 

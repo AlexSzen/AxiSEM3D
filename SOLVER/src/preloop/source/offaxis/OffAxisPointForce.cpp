@@ -45,9 +45,9 @@ void OffAxisPointForce::computeSourceFourier(const Quad &myQuad,
             double fact = interpFactXii(ipol) * interpFactEta(jpol);
 			for (int beta = 0; beta <= nu; beta++) {
 				for (int idim = 0; idim < 3; idim++) {
-					if (idim == 2 && beta == 0) {// only monopole vertical force 
+					if (idim == 2) {// only monopole vertical force 
 						fouriers[ipnt](beta, idim) = Complex(
-							1e20 * fact * exp(beta * phi * iid) * JPRT(ipnt));
+							1e10 * fact * exp(beta * phi * iid) * JPRT(ipnt));
 					}
 				}
 			}

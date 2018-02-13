@@ -171,6 +171,8 @@ void FluidElement::feedDispOnSide(int side, CMatXX_RM &buffer, int row) const {
 }
 
 const vec_ar3_CMatPP &FluidElement::getDisp() const {
+  // setup static
+  sResponse.setNr(mMaxNr);
   // get chi
   int ipnt = 0;
   for (int ipol = 0; ipol <= nPol; ipol++)
@@ -178,7 +180,25 @@ const vec_ar3_CMatPP &FluidElement::getDisp() const {
           mPoints[ipnt++]->scatterDisplToElement(sResponse.mDispl, ipol, jpol, mMaxNu);
   // u = nabla(chi) / rho       
   mGradient->computeGrad(sResponse.mDispl, sResponse.mStrain, sResponse.mNu, sResponse.mNyquist);
+  if (mInTIso) {
+	  mCrdTransTIso->transformSPZ_RTZ(sResponse.mStrain, sResponse.mNu);
+  }
+  if (mElem3D) {
+	  FieldFFT::transformF2P(sResponse.mStrain, sResponse.mNr);
+  }
+  if (mHasPRT) {
+	  mPRT->sphericalToUndulated(sResponse);
+  }    
   mAcoustic->potToDisp(sResponse);
+  if (mHasPRT) {
+	  mPRT->undulatedToSpherical(sResponse);
+  }
+  if (mElem3D) {
+	  FieldFFT::transformP2F(sResponse.mStress, sResponse.mNr);
+  }
+  if (mInTIso) {
+	  mCrdTransTIso->transformRTZ_SPZ(sResponse.mStress, sResponse.mNu);
+  }
   return sResponse.mStress;
   
 }

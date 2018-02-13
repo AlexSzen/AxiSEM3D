@@ -7,6 +7,9 @@
 #include "DomainRecorder.h"
 #include "eigenc.h"
 #include "PreloopFFTW.h" //just for lucky number 
+#include "KernerFFTW_N3.h"
+#include "KernerFFTW_N6.h"
+#include "KernerFFTW_N9.h"
 #include "Processor.h"
 
 Kerner::Kerner(bool dumpTimeKernels, int numKernels, std::vector<std::string> kerTypes, int totSteps, int maxNr, const RMatX2 filtParams, Real begWin, Real endWin): 
@@ -14,11 +17,17 @@ mDumpTimeKernels(dumpTimeKernels), mNumKernels(numKernels), mKerTypes(kerTypes),
 	
 	mIO = new KernerIO();
 	mTotSteps = PreloopFFTW::nextLuckyNumber(2 * totSteps + 1, false); //for fft we need to padd the wavefields with 0
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels = new MyBoostTimer();
+	#endif
 }
 
 Kerner::~Kerner() {
 	for (const auto &e: mKerElements) {delete e;}
 	delete mIO;
+	#ifdef _MEASURE_TIMELOOP
+	delete mTimerKernels;
+	#endif
 }
 
 void Kerner::initialize() {
@@ -29,24 +38,100 @@ void Kerner::initialize() {
 	startElem = std::accumulate(countElem.begin(), countElem.begin()+XMPI::rank(),0);
 	
 	mIO->initialize(mDumpTimeKernels, mFiltParams.rows(), startElem, countElem[XMPI::rank()], mDomainRecorder->mTotalRecordSteps);
-
-	Processor::initialize(mTotSteps, mDomainRecorder->mBufferTime, mFiltParams, mBegWin, mEndWin);	
+	
+	// init FFTW
+	KernerFFTW_N3::initialize(mTotSteps);
+	KernerFFTW_N6::initialize(mTotSteps);
+	KernerFFTW_N9::initialize(mTotSteps);
+	
+	// init processor for kernels 
+	Processor::initialize(mTotSteps, mDomainRecorder->mBufferTime, mFiltParams);	
+	
 	
 }
 
 void Kerner::finalize() {
 	
 	mIO->finalize();
+	
+	//finalize FFTW 
+	KernerFFTW_N3::finalize();
+	KernerFFTW_N6::finalize();
+	KernerFFTW_N9::finalize();
+	
 	Processor::finalize();
 }
 
-void Kerner::computeKernels() {
+void Kerner::computeKernels( int verbose ) {
+	if (verbose) {
+        XMPI::cout << XMPI::endl;
+        XMPI::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" << XMPI::endl;
+        XMPI::cout << "TTTTTTTTTT  START KERNEL COMPUTATION  TTTTTTTTTT" << XMPI::endl;
+        XMPI::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" << XMPI::endl << XMPI::endl;
+    }
 	
+	if (verbose) {
+		XMPI::cout<< " TTTTTTTTT DISTRIBUTE WAVEFIELDS TTTTTTTTTT" << XMPI::endl << XMPI::endl;
+	}
+	const double sec2h = 1. / 3600.;
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->start();
+	#endif
+	
+	// distribute backward 
 	distributeBwdWvfToElements();
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->stop();
+	#endif
+	
+	double costBwd = mTimerKernels->elapsed() * sec2h;
+	if (verbose) {
+		XMPI::cout<< " Distributed backward wavefield in "<< costBwd << " h" << XMPI::endl;
+	}
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->start();
+	#endif
+	
+	// distribute forward 
 	distributeFwdWvfToElements();
-
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->stop();
+	#endif
+	
+	double costFwd = mTimerKernels->elapsed() * sec2h;
+	if (verbose) {
+		XMPI::cout<< " Distributed forward wavefield in " << costFwd <<" h"<< XMPI::endl;
+	}
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->start();
+	#endif
+	
+	//distribute materials
 	distributeMaterialToElements();
-		
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->stop();
+	#endif
+	
+	double costMaterials = mTimerKernels->elapsed() * sec2h;
+	
+	if (verbose) {
+		XMPI::cout<< " Distributed material properties in " << costMaterials<< " h"<<XMPI::endl<<XMPI::endl;
+	}
+	
+	if (verbose) {
+		XMPI::cout<< " TTTTTTTTT COMPUTE KERNELS TTTTTTTTTT" << XMPI::endl << XMPI::endl;
+	}
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->start();
+	#endif
+	
 	// gather nus
 	int totNu = 0; 
 	for (int ielem = 0; ielem < mKerElements.size(); ielem++) {
@@ -60,7 +145,10 @@ void Kerner::computeKernels() {
 
 	int nuLine = 0;
 	
+	int reportInterval = mKerElements.size() / 10;
+	
 	for (int ielem = 0; ielem < mKerElements.size(); ielem++) {
+
 		
 		KernerElement *kerElem = mKerElements[ielem];
 		int nuElem = kerElem->getNuForward() + 1;
@@ -69,8 +157,57 @@ void Kerner::computeKernels() {
 		kerElem->feedKernels(mPhysicalKernels, nuLine, nuElem);
 		kerElem->clearKernels();
 		nuLine += nuElem;
+		
+		
+		if (verbose) {
+			if (XMPI::root()) {
+				if (ielem % reportInterval == 0) {
+					
+					int percent = (int)(100. * ielem / mKerElements.size());
+					XMPI::cout << " Percentage completed : " << percent << " %" << XMPI::endl; 
+
+				}			
+			}
+		}
 	}
+	XMPI::barrier();
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->stop();
+	#endif
+	
+	double costKernels = mTimerKernels->elapsed() * sec2h;
+	
+	if (verbose) {
+		XMPI::cout<< " Computed kernels in " << costKernels<< " h"<<XMPI::endl<<XMPI::endl;
+	}
+	
+	if (verbose) {
+		XMPI::cout<< " TTTTTTTTT WRITING TO FILE TTTTTTTTTT" << XMPI::endl << XMPI::endl;
+	}
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->start();
+	#endif
+	
+	
 	mIO->dumpToFile(mPhysicalKernels, Processor::sNumFilters);
+	
+	#ifdef _MEASURE_TIMELOOP
+		mTimerKernels->stop();
+	#endif
+	
+	double costDump = mTimerKernels->elapsed() * sec2h;
+	
+	if (verbose) {
+		XMPI::cout<< " Wrote to file in " << costDump<< " h"<<XMPI::endl<<XMPI::endl;
+	}
+	if (verbose) {
+        XMPI::cout << XMPI::endl;
+        XMPI::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" << XMPI::endl;
+        XMPI::cout << "TTTTTTTTTT  KERNEL COMPUTATION FINISHES TTTTTTTTTT" << XMPI::endl;
+        XMPI::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" << XMPI::endl << XMPI::endl;
+    }
 
 }
 

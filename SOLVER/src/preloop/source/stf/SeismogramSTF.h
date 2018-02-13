@@ -4,15 +4,15 @@
 #pragma once 
 
 #include "STF.h"
+#include "eigenc.h"
 
 class SeismogramSTF : public STF {
-
 public:
-	SeismogramSTF(RMatX3 trace, int downsampling, double dt_fwd, double length_fwd, double hdur_fwd, double decay_fwd);
-	std::string verbose();
+	SeismogramSTF(const RMatX3 trace, double dt_fwd, double duration_fwd, double hdur_fwd, double decay_fwd);
+	std::string verbose() const;
 	
 private:
-	
-	int mDownsampling;
+    double mHalfDuration;
+    double mDecay;
 	
 };

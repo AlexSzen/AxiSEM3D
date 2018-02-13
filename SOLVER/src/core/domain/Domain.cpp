@@ -255,8 +255,8 @@ void Domain::finalizeKerner() {
 	if (mKerner) mKerner->finalize();
 }
 
-void Domain::computeKernels() {
-	if (mKerner) mKerner->computeKernels();
+void Domain::computeKernels( int verbose ) {
+	if (mKerner) mKerner->computeKernels(verbose);
 }
 
 void Domain::checkStability(double dt, int tstep, double t) const {

@@ -6,6 +6,7 @@
 #include "KernerFFTW_N3.h"
 #include "KernerFFTW_N6.h"
 #include "KernerFFTW_N9.h"
+#include "PreloopFFTW_time.h"
 #include "eigenc.h"
 #include "Tapers.h"
 #include "Filters.h"
@@ -21,13 +22,8 @@ Real Processor::sWindowBeg = 0.;
 Real Processor::sWindowEnd = 0.;
 int Processor::sNumFilters = 0;
 
-void Processor::initialize(int totSteps, const RColX &bufTime, const RMatX2 filtParams, Real begWin, Real endWin) {
-	
-	// init FFTW
-	KernerFFTW_N3::initialize(totSteps);
-	KernerFFTW_N6::initialize(totSteps);
-	KernerFFTW_N9::initialize(totSteps);
-	
+void Processor::initialize(int totSteps, const RColX &bufTime, const RMatX2 filtParams) {
+
 	// get dt 
 	sTime = bufTime;
 	sDt = bufTime(1) - bufTime(0); //sampling 
@@ -66,18 +62,10 @@ void Processor::initialize(int totSteps, const RColX &bufTime, const RMatX2 filt
 		Filters::logGabor(sFilters, sFreq, one/filtParams(i,0), filtParams(i,1), i);
 	}
 	
-	// window 
-	sWindowBeg = begWin;
-	sWindowEnd = endWin;
-
-	
 }
 
 void Processor::finalize() {
-	
-	KernerFFTW_N3::finalize();
-	KernerFFTW_N6::finalize();
-	KernerFFTW_N9::finalize();
+
 	
 }
 
@@ -167,4 +155,22 @@ void Processor::transformF2T(const vec_ar9_CMatPP& uf, vec_ar9_RMatPP& ut) {
 	RMatXN9 tempT = KernerFFTW_N9::getC2R_RMat();
 	makeStruct<vec_ar9_RMatPP, RMatXN9>(ut, tempT);
 
+}
+
+void Processor::transformT2F_preloop(const RMatX3& ut, CMatX3& uf) {
+	
+	RMatX3 &tempT = PreloopFFTW_time::getR2C_RMat();
+	tempT = ut;
+	PreloopFFTW_time::computeR2C();
+	uf = PreloopFFTW_time::getR2C_CMat();
+		
+}
+
+void Processor::transformF2T_preloop(const CMatX3& uf, RMatX3& ut) {
+	
+	CMatX3 &tempF = PreloopFFTW_time::getC2R_CMat();
+	tempF = uf;
+	PreloopFFTW_time::computeC2R();
+	ut = PreloopFFTW_time::getC2R_RMat();
+		
 }

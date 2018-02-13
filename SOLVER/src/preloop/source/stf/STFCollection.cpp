@@ -10,7 +10,9 @@
 #include "ErfSTF.h"
 #include "GaussSTF.h"
 #include "RickerSTF.h"
+#include "SeismogramSTF.h"
 #include "NetCDF_Reader.h"
+#include "eigenc.h"
 
 STFCollection::STFCollection(double hdur, double duration, std::string mstf, double dt, int enforceMaxSteps, std::string offaxis_file, bool kernels) {
 	
@@ -87,15 +89,13 @@ STFCollection::STFCollection(double hdur, double duration, std::string mstf, dou
 			XMPI::bcast(num_sources);
 
 		}
-		
-		// get downsampling factor from seismograms to wavefields 
-		// get both dumping intervals, ratio is downsampling.
-		int ratio = 0; 
+ 		// init fftw 
 		std::string fname_seismo = Parameters::sOutputDirectory + "/stations/axisem3d_synthetics.nc";
 		std::string fname_wvf = Parameters::sOutputDirectory + "/wavefields/wavefield_db_fwd.nc4";
 		
 		NetCDF_Reader ncr = NetCDF_Reader();
-
+		
+		int ratio = 0;
 		if (XMPI::root()) {
 			
 			
@@ -125,14 +125,15 @@ STFCollection::STFCollection(double hdur, double duration, std::string mstf, dou
 		for (int i = 0; i < num_sources; i++) { // TODO : STF FROM SEISMOGRAMS 
 			
 			std::vector<size_t> dims;
-			std::string key = network[i] + "." + name[i] + ".RTZ";
+			std::string key = network[i] + "." + name[i] + ".SPZ";
 			//get dims of seismogram 
 			ncr.getVarDimensions(key, dims);
 			//define trace
 			RMatX3 trace(dims[0], dims[1]);
 			//read trace 
 			ncr.read2D(key, trace);
-
+			
+		//	STF *stf = new SeismogramSTF(trace, dt, duration, hdur, decay);
 			STF *stf = new GaussSTF(dt, duration, hdur, decay);
 			
 			// max total steps
@@ -147,6 +148,8 @@ STFCollection::STFCollection(double hdur, double duration, std::string mstf, dou
 			
 			mSTFs.push_back(stf);
 		}
+		
+		// finalize fftw 
 	}
 	
 

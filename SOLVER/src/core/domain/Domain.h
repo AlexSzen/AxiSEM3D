@@ -93,7 +93,7 @@ public:
 	// kernels 
 	void initializeKerner();
 	void finalizeKerner();
-	void computeKernels();
+	void computeKernels( int verbose );
     
 private:
     bool pointInPreviousRank(int myPointTag) const;

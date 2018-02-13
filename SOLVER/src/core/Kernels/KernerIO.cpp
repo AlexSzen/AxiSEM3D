@@ -70,7 +70,6 @@ void KernerIO::finalize() {
 
 void KernerIO::dumpToFile(vec_vec_ar12_RMatPP &kernels, int numFilters) {
 	
-	std::cout<< mStartElemNu << " " << mCountElemNu<<std::endl;
 	std::vector<size_t> startKernels, countKernels;
 	startKernels.push_back(0);
 	startKernels.push_back(mStartElemNu);
@@ -153,7 +152,6 @@ void KernerIO::loadWavefield(vec_vec_ar6_RMatPP &disp, std::vector<int> &Nus, st
 	// create start and count for elemNu
 	int totNuProc = 0;
 	for (int i = 0; i<Nus.size(); i++) totNuProc+=Nus[i];
-  	std::cout<< XMPI::rank() << " has " << totNuProc << std::endl;
 	int temp_startElemNu;
 	std::vector<int> temp_countElemNu(XMPI::nproc(),0);
 	XMPI::gather(totNuProc, temp_countElemNu, true);
@@ -175,7 +173,6 @@ void KernerIO::loadWavefield(vec_vec_ar6_RMatPP &disp, std::vector<int> &Nus, st
 	countElemNu.push_back(6);
 	countElemNu.push_back(nPntEdge);
 	countElemNu.push_back(nPntEdge);
-	std::cout << XMPI::rank() << " starts " << startElemNu[1] << " reads " << countElemNu[1]<<std::endl;
 	// fill disp with 0 
 	vec_ar6_RMatPP initBuf(mCountElemNu, zero_ar6_RMatPP);
 	for (int it = 0; it < mTotSteps; it++) {//have to read one by one 
@@ -227,11 +224,7 @@ void KernerIO::loadMaterial(vec_ar12_RMatPP &materials, std::vector<int> &Nus) {
 	vec_ar2_RMatPP vp(totNuProc,zero_ar2_RMatPP);
 	
 	mNetCDF_r->readVariableChunk("material_fields", materials, startElemNu, countElemNu);
-//	countElemNu[1] = 2;
-//	mNetCDF_r->readVariableChunk("vp", vp, startElemNu, countElemNu);
-//	for (int i=0;i<totNuProc;i++) {
-	//	materials[i][0] = vp[i][0]; 
-//	}
+
 	
 	mNetCDF_r->close();
 	
