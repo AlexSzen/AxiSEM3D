@@ -5,51 +5,48 @@
 #include "NetCDF_Reader.h"
 #include "Parameters.h"
 #include "XMPI.h"
+#include <iostream>
 
-void KernerIO::initialize(int dumpTimeKernels, int numFilters, int temp_startElem, int temp_countElem, int totSteps) {
-	
-	mTotSteps = totSteps;
-	mStartElem = temp_startElem;
-	mCountElem = temp_countElem;
+KernerIO::KernerIO(bool dumpTimeKernels, int temp_startElem, int temp_countElem, int totSteps):
+mDumpTimeKernels(dumpTimeKernels), mStartElem(temp_startElem), mCountElem(temp_countElem), mTotSteps(totSteps) 
+ {
 	
 	mNetCDF_w = new NetCDF_Writer();
 	mNetCDF_r = new NetCDF_Reader();
 	
-	std::string fname_ker = Parameters::sOutputDirectory + "/kernels/kernels_db.nc4";
-	std::string fname_wvf = Parameters::sOutputDirectory + "/wavefields/wavefield_db_fwd.nc4";
+}
+void KernerIO::initialize(int totNu, int startElemNu, int countElemNu, int totElem) {
 
+
+	std::string fname_ker = Parameters::sOutputDirectory + "/kernels/kernels_db.nc4";
+	mStartElemNuKernels = startElemNu;
+	mCountElemNuKernels = countElemNu;
+	
 	if (XMPI::root()) {
-		
-		// get length of dimensions of fwd field : kernel will have the same for nus  
-		mNetCDF_r->open(fname_wvf);
-		
-		std::vector<size_t> dims;
-		mNetCDF_r->getVarDimensions("displacement_wavefield", dims);
-		
-		mNetCDF_r->close();
-		
+	
 		//create dims and vars in kernel file 
 		mNetCDF_w->open(fname_ker, true);
 		
-		std::vector<size_t> dims_notime; // for time integrated kernels 
-		std::vector<size_t> dims_time; // for time kernels, optional. only allow to store one kernel in time
-
-		dims_notime.push_back( dims[0] );
-		//dims_notime.push_back( numFilters );
-		dims_notime.push_back( dims[1] );
-		dims_notime.push_back( 12 ); //real and imag parts of elastic radial ani kernels. 
-		dims_notime.push_back( nPntEdge );
-		dims_notime.push_back( nPntEdge );
-
-		dims_time.push_back( dims[0] );
-		dims_time.push_back( dims[1] );
-		dims_time.push_back( 2 ); //real and imag 
-		dims_time.push_back( nPntEdge );
-		dims_time.push_back( nPntEdge );
+		std::vector<size_t> dims_kernels; 
+		std::vector<size_t> dims_nus;
+		
+		if (mDumpTimeKernels) {
+			dims_kernels.push_back( mTotSteps );
+		} else {
+			dims_kernels.push_back( 1 );
+		}		
+		dims_kernels.push_back( totNu );
+		dims_kernels.push_back( 6 ); //real and imag parts of elastic radial ani kernels. 
+		dims_kernels.push_back( nPntEdge );
+		dims_kernels.push_back( nPntEdge );
+		
+		dims_nus.push_back(totElem);
 		
 		mNetCDF_w->defModeOn();
-		mNetCDF_w->defineVariable<Real>("Kernels", dims_notime);
-		if (dumpTimeKernels) mNetCDF_w->defineVariable<Real>("Kernels_time", dims_time);
+		mNetCDF_w->defineVariable<Real>("Kernels", dims_kernels);
+		mNetCDF_w->defineVariable<int>("Nus", dims_nus);
+		mNetCDF_w->defineVariable<int>("Nrs", dims_nus);
+
 		
 		mNetCDF_w->defModeOff();
 		mNetCDF_w->close();
@@ -68,31 +65,41 @@ void KernerIO::finalize() {
 	
 }
 
-void KernerIO::dumpToFile(vec_vec_ar12_RMatPP &kernels, int numFilters) {
+void KernerIO::dumpToFile(const vec_vec_ar6_RMatPP &kernels, const std::vector<int> &nusKer,const std::vector<int> &nrsKer) {
 	
-	std::vector<size_t> startKernels, countKernels;
+	std::vector<size_t> startKernels, countKernels, startNus, countNus;
 	startKernels.push_back(0);
-	startKernels.push_back(mStartElemNu);
+	startKernels.push_back(mStartElemNuKernels);
 	startKernels.push_back(0);
 	startKernels.push_back(0);
 	startKernels.push_back(0);
 	
 	countKernels.push_back(1); //have to write one by one because of netcdf issue
-	countKernels.push_back(mCountElemNu);
-	countKernels.push_back(12);
+	countKernels.push_back(mCountElemNuKernels);
+	countKernels.push_back(6);
 	countKernels.push_back(nPntEdge);
 	countKernels.push_back(nPntEdge); 
+	
+	startNus.push_back(mStartElem);
+	countNus.push_back(mCountElem);
 	
 	std::string fname = Parameters::sOutputDirectory + "/kernels/kernels_db.nc4";
 	mNetCDF_w->openParallel(fname);
 	
-	for (int ifilt = 0; ifilt < mTotSteps ; ifilt ++) {
+	int dumpSize = 1;
+	if (mDumpTimeKernels) {
+		dumpSize = kernels.size();
+	}
+	for (int it = 0; it < dumpSize ; it ++) {
 		
-		mNetCDF_w->writeVariableChunk("Kernels", kernels[ifilt], startKernels, countKernels);
+		mNetCDF_w->writeVariableChunk("Kernels", kernels[it], startKernels, countKernels);
 		startKernels[0]++;
 		
 	}
 	
+	mNetCDF_w->writeVariableChunk("Nus", nusKer, startNus, countNus);
+	mNetCDF_w->writeVariableChunk("Nrs", nrsKer, startNus, countNus);
+
 	mNetCDF_w->close();
 	
 	
@@ -157,8 +164,8 @@ void KernerIO::loadWavefield(vec_vec_ar6_RMatPP &disp, std::vector<int> &Nus, st
 	XMPI::gather(totNuProc, temp_countElemNu, true);
 	temp_startElemNu = std::accumulate(temp_countElemNu.begin(), temp_countElemNu.begin() + XMPI::rank(), 0);
 	
-	mCountElemNu = temp_countElemNu[XMPI::rank()];
-	mStartElemNu = temp_startElemNu;
+	mCountElemNuFwd = temp_countElemNu[XMPI::rank()];
+	mStartElemNuFwd = temp_startElemNu;
 	
 	std::vector<size_t> startElemNu, countElemNu;
 	
@@ -174,7 +181,7 @@ void KernerIO::loadWavefield(vec_vec_ar6_RMatPP &disp, std::vector<int> &Nus, st
 	countElemNu.push_back(nPntEdge);
 	countElemNu.push_back(nPntEdge);
 	// fill disp with 0 
-	vec_ar6_RMatPP initBuf(mCountElemNu, zero_ar6_RMatPP);
+	vec_ar6_RMatPP initBuf(mCountElemNuFwd, zero_ar6_RMatPP);
 	for (int it = 0; it < mTotSteps; it++) {//have to read one by one 
 		mNetCDF_r->readVariableChunk("displacement_wavefield", initBuf, startElemNu, countElemNu);
 		disp.push_back(initBuf);
@@ -209,12 +216,12 @@ void KernerIO::loadMaterial(vec_ar12_RMatPP &materials, std::vector<int> &Nus) {
 	
 	std::vector<size_t> startElemNu, countElemNu;
 	
-	startElemNu.push_back(mStartElemNu);
+	startElemNu.push_back(mStartElemNuFwd);
 	startElemNu.push_back(0);
 	startElemNu.push_back(0);
 	startElemNu.push_back(0);
 	
-	countElemNu.push_back(mCountElemNu);
+	countElemNu.push_back(mCountElemNuFwd);
 	countElemNu.push_back(12);
 	countElemNu.push_back(nPntEdge);
 	countElemNu.push_back(nPntEdge);

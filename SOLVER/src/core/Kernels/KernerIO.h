@@ -10,10 +10,11 @@ class NetCDF_Writer;
 class KernerIO {
 	
 public:
-		
-	void initialize(int dumpTimeKernels, int numFilters, int temp_startElem, int temp_countElem, int totSteps);
+	
+	KernerIO(bool dumpTimeKernels, int temp_startElem, int temp_countElem, int totSteps);	
+	void initialize(int totNu, int startElemNu, int countElemNu, int totElem);
 	void finalize();
-	void dumpToFile(vec_vec_ar12_RMatPP &kernels, int numFilters);
+	void dumpToFile(const vec_vec_ar6_RMatPP &kernels, const std::vector<int> &nusKer,const std::vector<int> &nrsKer);
 	
 	void loadNus(std::vector<int> &Nus);
 	void loadNrs(std::vector<int> &Nrs); 
@@ -24,6 +25,7 @@ private:
 	NetCDF_Writer *mNetCDF_w; 
 	NetCDF_Reader *mNetCDF_r; //used to load fwd wvf 
 	
-	size_t mStartElem, mCountElem, mStartElemNu, mCountElemNu; //storing these to avoid redundant computations
+	size_t mStartElem, mCountElem, mStartElemNuFwd, mCountElemNuFwd, mStartElemNuKernels, mCountElemNuKernels; //storing these to avoid redundant computations
 	int mTotSteps; 
+	bool mDumpTimeKernels;
 };

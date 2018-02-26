@@ -49,7 +49,6 @@ int axisem_main(int argc, char *argv[]) {
 		double srcLon = pl.mSources->getLongitude();
 		double srcDep = pl.mSources->getDepth();
 		MultilevelTimer::end("Build Sources", 0);
-        
         //////// 3D models 
         MultilevelTimer::begin("Build 3D Models", 0);
         Volumetric3D::buildInparam(pl.mVolumetric3D, *(pl.mParameters), pl.mExodusModel, 
@@ -79,7 +78,6 @@ int axisem_main(int argc, char *argv[]) {
         MultilevelTimer::begin("Initialize FFTW", 0);
         initializeSolverStatic(pl.mMesh->getMaxNr(), disableWisdomFFTW); 
         MultilevelTimer::end("Initialize FFTW", 0);
-        
         //////// dt
         MultilevelTimer::begin("Compute DT", 0);
         double dt = pl.mParameters->getValue<double>("TIME_DELTA_T");
@@ -159,6 +157,7 @@ int axisem_main(int argc, char *argv[]) {
 		//release kernels
 		MultilevelTimer::begin("Release Kerner", 1);
 		pl.mKernels->release(*(sv.mDomain), *(pl.mMesh));
+		sv.mDomain->initializeKerner();
 		MultilevelTimer::end("Release Kerner", 1);
         
         // verbose domain 
@@ -190,11 +189,10 @@ int axisem_main(int argc, char *argv[]) {
         XMPI::barrier();
         sv.mNewmark->solve(verbose);
 
-        /////// at the end of time loop we start kernels 	
-		sv.mDomain->initializeKerner();
+		
 
 		/////// compute kernels 
-		sv.mDomain->computeKernels( verbose );
+	//	sv.mDomain->computeKernels( verbose );
 		
         //////// finalize solver
         // solver 

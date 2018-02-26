@@ -41,6 +41,33 @@ void NetCDF_Reader::close() {
     }
 }
 
+void NetCDF_Reader::getAttributeString(const std::string &vname, const std::string &attname, std::string &attvalue) const {
+	//// Problem with dynamic allocation of chars. 
+	/// If dynamically allocated char array, some lengths of attributes cause problems for some reason (e.g. if shorter than the name of the attribute)
+	/// Workaround by declaring compile time array big enough to hold any string (e.g. 1000). 
+	
+	int varid = -1;
+	int varloc = -1;
+	if (vname == "") {
+		varid = NC_GLOBAL;
+		varloc = mFileID;
+	} else {
+		varid = inquireVariable(vname);
+		varloc = mFileID;
+	}
+	
+	size_t attlen = 0;
+	netcdfError(nc_inq_attlen(varloc, varid, attname.c_str(), &attlen), "nc_inq_attlen");
+	char cstr[1000]; // assume will never go above 1000 chars string... 
+	if (nc_get_att_text(varloc, varid, attname.c_str(), cstr) != NC_NOERR) {
+		throw std::runtime_error("NetCDF_Reader::getAttributeString || "
+			"Error getting attribute from variable, variable: " + vname + ", attribute: " + attname  
+			+ " || NetCDF file: " + mFileName);
+	}
+	attvalue = std::string(cstr);
+		
+}
+
 void NetCDF_Reader::readString(const std::string &vname, std::vector<std::string> &data) const {
     // access variable
     int var_id = -1;
@@ -69,7 +96,6 @@ void NetCDF_Reader::readString(const std::string &vname, std::vector<std::string
     int numString = dims[0];
     int lenString = dims[1];
     char *cstr = new char[numString * lenString];
-    
     netcdfError(nc_get_var_text(mFileID, var_id, cstr), "nc_get_var_text");
     for (int i = 0; i < numString; i++) {
         data.push_back(std::string(&cstr[i * lenString]));

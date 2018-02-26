@@ -286,7 +286,7 @@ void PointwiseIONetCDF::dumpToFile(const RMatXX_RM &bufferDisp,
     #endif
 	
     // flush to disk
-    //mNetCDF->flush(); NETCDF FLUSH MAKES THE PROGRAM HANG FOR SOME REASON. ok seems to be wrong anyway ... 
+    //mNetCDF->flush(); //NETCDF FLUSH MAKES THE PROGRAM HANG FOR SOME REASON. 
     // record postion in nc file
     mCurrentRow += bufferLine;
 

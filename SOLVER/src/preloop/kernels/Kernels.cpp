@@ -27,47 +27,16 @@ void Kernels::buildInparam(Kernels *&kernels, const Parameters &par, int totalSt
 
 	kernels = new Kernels(computeKer);
 	if (!computeKer) return;
-
-	std::string filt = par.getValue<std::string>("FILTER_TYPE");
-	std::vector<Real> filtParams;
 	
-	if (boost::iequals(filt, "log_gabor")) {
-			
-			Real center = par.getValue<Real>("CENTER_FREQ");
-			filtParams.push_back(center);
-			
-			Real sigma = par.getValue<Real>("SIGMA");
-			filtParams.push_back(sigma);
-		
-		
-	} else throw std::runtime_error("Parameters :: filter " + filt + " not implemented");
-	
-	kernels->mNumFilters = par.getSize("FILTER_PARAMS")/2;
-	kernels->mFiltParams = RMatX2(kernels->mNumFilters,2);
-	int ilist = 0;
-	for (int i = 0; i < kernels->mNumFilters; i++) {
-		kernels->mFiltParams(i,0) = par.getValue<Real>("FILTER_PARAMS", ilist);
-		kernels->mFiltParams(i,1) = par.getValue<Real>("FILTER_PARAMS", ilist+1);
-		ilist+=2;
-	}
-	
-	kernels->mBegWin = par.getValue<Real>("BEG_WINDOW");
-	kernels->mEndWin = par.getValue<Real>("END_WINDOW");
-
-	kernels->mTaper = par.getValue<std::string>("TAPER_TYPE");
-	
-	kernels->mNumKernels = par.getSize("KERNEL_TYPES");
-	for (int i = 0; i < kernels->mNumKernels; i++) {
-		kernels->mKerTypes.push_back(par.getValue<std::string>("KERNEL_TYPES", i));
-	}
-			
+	kernels->mMaxStep = totalStepsSTF;
 	kernels->mRmin = par.getValue<double>("RMIN")*1e3;
 	kernels->mRmax = par.getValue<double>("RMAX")*1e3;
 	kernels->mThetaMin = par.getValue<double>("THETA_MIN")*degree;
 	kernels->mThetaMax = par.getValue<double>("THETA_MAX")*degree;
 	kernels->mDumpTimeKernels = par.getValue<bool>("OUTPUT_TIME_KERNELS");
-
+	
 	int recInterval = par.getValue<int>("WAVEFIELD_RECORD_INTERVAL");
+	kernels->mRecordInterval = recInterval;
 	if (recInterval <= 0) {
 		recInterval = 1;
 	}
@@ -75,6 +44,11 @@ void Kernels::buildInparam(Kernels *&kernels, const Parameters &par, int totalSt
 	kernels->mTotalStepsKernels = totalStepsSTF / recInterval;
 	if (totalStepsSTF % recInterval > 0) {
 		kernels->mTotalStepsKernels += 1;
+	}
+	
+	kernels->mBufferSize = par.getValue<int>("WAVEFIELD_DUMP_INTERVAL");
+	if (kernels->mBufferSize <= 0) {
+		kernels->mBufferSize = 10;
 	}
 	
 	if (verbose) XMPI::cout << kernels->verbose();
@@ -85,7 +59,7 @@ void Kernels::release(Domain &domain, const Mesh &mesh) {
 	
 	if (!mComputeKernels) return;
 	
-	Kerner *kerner = new Kerner(mDumpTimeKernels, mNumKernels, mKerTypes, mTotalStepsKernels, mesh.getMaxNr(), mFiltParams, mBegWin, mEndWin);  
+	Kerner *kerner = new Kerner(mDumpTimeKernels, mTotalStepsKernels, mBufferSize, mRecordInterval, mMaxStep);  
 	
 	for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {
 		Element *elem = domain.getElement(ielem);
@@ -103,17 +77,8 @@ std::string Kernels::verbose() {
 	
 	std::stringstream ss;
 	ss << "\n========================= Kernels ========================" << std::endl;
-	ss << "Kernels to be computed : " ; 
-	for (int i = 0; i<mNumKernels; i++) {
-		ss << mKerTypes[i] << " ";
-	}
-	ss << std::endl;
-	ss << "Number of filters : " << mNumFilters<< "\n" << std::endl;
-	for (int i = 0; i<mNumFilters; i++) {
-		ss << "Type : log gabor, center period = "<< mFiltParams(i,0) << "s sigma = " << mFiltParams(i,1) << "\n"; 
-	}
-	ss << std::endl;
-	ss << "Taper : " << mTaper << std::endl;
+	ss << "Kernels will be computed" <<std::endl; 
+	
 	ss << "========================= Kernels ========================\n" << std::endl;
 	return ss.str();
 }

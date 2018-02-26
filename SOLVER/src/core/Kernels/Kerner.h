@@ -16,16 +16,17 @@ class KernerIO;
 class Kerner {
 	
 public:
-	Kerner(bool dumpTimeKernels, int numKernels, std::vector<std::string> kerTypes, int totSteps, int maxNr, const RMatX2 filtParams, Real begWin, Real endWin);
+	Kerner(bool dumpTimeKernels, int totSteps, int bufferSize, int recInterval, int maxStep);
 	~Kerner();
 	
 	void initialize();
 	void finalize();
+	void dumpToFile();
 	
 	void setDomainRecorder(DomainRecorder *recorderDM) {mDomainRecorder = recorderDM;};
 	void addKernerElement(KernerElement *kerElem) {mKerElements.push_back(kerElem);};
 	//int getSize() {return mKerElements.size();};
-	void computeKernels( int verbose );
+	void computeKernels( int tstep );
 	const int getNumElements() const {return mKerElements.size();};
 	
 private:
@@ -38,25 +39,14 @@ private:
 	DomainRecorder *mDomainRecorder;
 	KernerIO *mIO;
 	std::vector<KernerElement*> mKerElements;
-	vec_vec_ar12_RMatPP mPhysicalKernels; // real and imag part of kernels for all filters and whole domain.
-	
+	vec_vec_ar6_RMatPP mPhysicalKernels; // real and imag part of kernels for all filters and whole domain.
+	std::vector<int> mNusKernel, mNrsKernel;
 	// time kernels options 
 	bool mDumpTimeKernels;
-
-	// integrated kernels 
-	int mNumKernels;
-	std::vector<std::string> mKerTypes;
 	
 	int mMaxNr; //used for fftw init 
 	int mTotSteps; // also for fftw (and others)
-	
-	//filtering 
-	RMatX2 mFiltParams;
-	
-	// windowing 
-	Real mBegWin, mEndWin;
-	
-	#ifdef _MEASURE_TIMELOOP
-		MyBoostTimer *mTimerKernels;
-	 #endif
+	int mBufferSize;
+	int mRecordInterval;
+	int mMaxStep; //max step of time loop
 };

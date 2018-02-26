@@ -27,23 +27,12 @@ private:
 	
 	bool mComputeKernels;
 	bool mDumpTimeKernels;
-	//filtering 
-	int mNumFilters;
-	RMatX2 mFiltParams;
-	
-	//tapering 
-	std::string mTaper;
-	
-	// kernels to compute 
-	int mNumKernels;
-	std::vector<std::string> mKerTypes;
-	
+
 	double mRmin = 0., mRmax = 7.e6;
 	double mThetaMin = 0., mThetaMax = 180.;
 	
-	int mTotalStepsKernels;
-	
-	Real mBegWin, mEndWin;
+	int mTotalStepsKernels, mBufferSize, mRecordInterval;
+	int mMaxStep; // max step for time loop
 	
 	
 };

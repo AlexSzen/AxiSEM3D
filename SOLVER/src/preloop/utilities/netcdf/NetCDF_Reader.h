@@ -117,6 +117,8 @@ public:
 				+ " || NetCDF file: " + mFileName);
 		}
 	};
+	
+	void getAttributeString(const std::string &vname, const std::string &attname, std::string &attvalue) const;
     
 	// get lengths of dimensions for a variable
 	void getVarDimensions(const std::string &vname, std::vector<size_t> &dims) const;
@@ -137,6 +139,9 @@ private:
     
 private:
     int mFileID = -1;
+	int mPWD = -1;
+	
+protected:
     std::string mFileName = "";
 };
 

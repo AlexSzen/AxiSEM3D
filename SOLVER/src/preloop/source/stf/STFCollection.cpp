@@ -13,6 +13,8 @@
 #include "SeismogramSTF.h"
 #include "NetCDF_Reader.h"
 #include "eigenc.h"
+#include "PreloopFFTW_time.h"
+#include "Processor.h"
 
 STFCollection::STFCollection(double hdur, double duration, std::string mstf, double dt, int enforceMaxSteps, std::string offaxis_file, bool kernels) {
 	
@@ -52,10 +54,7 @@ STFCollection::STFCollection(double hdur, double duration, std::string mstf, dou
 		mSTFs.push_back(stf);
 		
 	} else { //if kernels, create STFs for off axis sources, and no axis source. 
-		
-		int num_sources = 0;
-		
-		// get number of receivers, i.e. off axis sources 
+			
 		// get names of receivers to read the seismogram 
 		std::vector<std::string> name, network;
 
@@ -76,7 +75,6 @@ STFCollection::STFCollection(double hdur, double duration, std::string mstf, dou
 						}
 						name.push_back(strs[0]);
 						network.push_back(strs[1]);
-						num_sources++;
 					} catch(std::exception) {
 						// simply ignore invalid lines
 						continue;
@@ -86,55 +84,91 @@ STFCollection::STFCollection(double hdur, double duration, std::string mstf, dou
 			}
 			XMPI::bcast(name);
 			XMPI::bcast(network);
-			XMPI::bcast(num_sources);
 
 		}
- 		// init fftw 
-		std::string fname_seismo = Parameters::sOutputDirectory + "/stations/axisem3d_synthetics.nc";
-		std::string fname_wvf = Parameters::sOutputDirectory + "/wavefields/wavefield_db_fwd.nc4";
 		
-		NetCDF_Reader ncr = NetCDF_Reader();
 		
-		int ratio = 0;
-		if (XMPI::root()) {
-			
-			
 
-			
-			int interval_seismo = 0;
-			int interval_wvf = 0;
-			
-			ncr.open(fname_seismo);
-			ncr.getAttribute("", "record_interval", interval_seismo);
-			ncr.close();
-			
-			ncr.open(fname_wvf);
-			ncr.getAttribute("", "record_interval", interval_wvf);
-			ncr.close();
-			
-			ratio = interval_wvf / interval_seismo;
-			
-			
-		}
-		XMPI::bcast(ratio);
+		std::string fname_seismo = Parameters::sOutputDirectory + "/stations/axisem3d_synthetics_fwd.nc";
+		std::string fname_adjoint_inputs = Parameters::sInputDirectory + "/adjoint_stations.nc4";
 		
-		// for each off axis source, load time reversed seismogram to act as STF 
+		
+		
+		NetCDF_Reader ncr = NetCDF_Reader(); // loads forward seismograms 
+		NetCDF_Reader ncr_params = NetCDF_Reader(); // loads params for adjoint sources 
 		
 		ncr.openParallel(fname_seismo);
+		ncr_params.openParallel(fname_adjoint_inputs);
+		
+		// number of adjoint sources 
+		int num_sources = 0;
+		ncr_params.getAttribute("", "num_sources", num_sources);						
+		if (num_sources > network.size()) throw std::runtime_error("STFCollection : Number of adjoint sources bigger than number of stations in STATIONS file.");
+		
+		// type of tomography 
+		std::string tomo;
+		ncr_params.getAttributeString("", "measurement_type", tomo);
 
+		// read time points
+		std::vector<size_t> dim_time;
+		ncr.getVarDimensions("time_points", dim_time);
+		RColX time_points(dim_time[0]);
+		ncr.read1D("time_points", time_points);
+		// init fftw.  
+		PreloopFFTW_time::initialize((int) dim_time[0]);
+		
+		// init processor 
+		Processor::initialize((int) dim_time[0], time_points);
+		
+		// create filters
+		int num_filters = 0;
+		ncr_params.getAttribute("", "num_filters", num_filters);
+		RMatXX filt_params = RMatXX(num_filters, 2); // temporary implementation, only with log gabor 
+		std::vector<std::string> filter_names;
+
+		for (int ifilt = 0; ifilt < num_filters; ifilt++) {
+			
+			std::string ifilt_name = "band_" + std::to_string(ifilt); 
+			RDColX ifilt_params(2); // generated in python so need to read with double.
+			ncr_params.read1D(ifilt_name,ifilt_params);
+			filt_params.row(ifilt) = ifilt_params.cast<Real>(); 
+
+
+		}
+		
+		Processor::createFilters(filt_params);
+		
+		// for each off axis source, load seismogram to act as STF 
 		for (int i = 0; i < num_sources; i++) { // TODO : STF FROM SEISMOGRAMS 
 			
-			std::vector<size_t> dims;
+			std::vector<size_t> dims, dims_params;
 			std::string key = network[i] + "." + name[i] + ".SPZ";
+			std::string key_params = network[i] + "." + name[i]; 
+			
 			//get dims of seismogram 
 			ncr.getVarDimensions(key, dims);
-			//define trace
-			RMatX3 trace(dims[0], dims[1]);
 			//read trace 
+			RMatX3 trace(dims[0], dims[1]);
 			ncr.read2D(key, trace);
 			
-		//	STF *stf = new SeismogramSTF(trace, dt, duration, hdur, decay);
-			STF *stf = new GaussSTF(dt, duration, hdur, decay);
+
+			
+			//get dims of params 
+			ncr_params.getVarDimensions(key_params, dims_params);
+			//read params
+			RDMatXX adjoint_params(dims_params[0],dims_params[1]);
+			ncr_params.read2D(key_params, adjoint_params);
+
+			IColX filter_types = IColX(adjoint_params.rows());
+			
+			for (int i_measurement = 0; i_measurement < adjoint_params.rows(); i_measurement++) {
+				int filter_type;
+				ncr_params.getAttribute(key_params, "filter_" + std::to_string(i_measurement), filter_type);
+				filter_types(i_measurement) = filter_type; // gives index of filter to use.
+			} 
+						
+			STF *stf = new SeismogramSTF(trace, dt, duration, hdur, decay, adjoint_params, filter_types);
+		//	STF *stf = new GaussSTF(dt, duration, hdur, decay);
 			
 			// max total steps
 			int maxTotalSteps = INT_MAX;
@@ -147,9 +181,11 @@ STFCollection::STFCollection(double hdur, double duration, std::string mstf, dou
 				stf->mSTFz.resize(maxTotalSteps);			}
 			
 			mSTFs.push_back(stf);
+			
 		}
 		
 		// finalize fftw 
+		PreloopFFTW_time::finalize();
 	}
 	
 

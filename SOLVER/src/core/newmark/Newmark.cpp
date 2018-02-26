@@ -51,8 +51,13 @@ void Newmark::solve(int verbose) const {
         mDomain->assembleStiff(-1);
         
         // record seismograms
-        mDomain->record(tstep - 1, t);    
+        mDomain->record(tstep - 1, t);   
+		
+		// compute Kernels 
+		mDomain->computeKernels(tstep); 
         t += dt;
+		
+
         
         // check stability
         if (tstep % mCheckStabInterval == 0) {

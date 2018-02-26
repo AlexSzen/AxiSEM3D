@@ -142,9 +142,10 @@ void ReceiverCollection::release(Domain &domain, const Mesh &mesh) {
         recorderPW->addIO(io);
     }
     
-    // add recorder to domain
-    domain.setPointwiseRecorder(recorderPW);
-	
+	if (!mComputeKernels) { //if kernels receivers make no sense (at the moment, since we use the file in stations)
+    	// add recorder to domain
+    	domain.setPointwiseRecorder(recorderPW);
+	}
 	// whole surface
 	if (mSaveWholeSurface) {
 		SurfaceRecorder *recorderSF = new SurfaceRecorder(mTotalRecordSteps, 
@@ -160,7 +161,7 @@ void ReceiverCollection::release(Domain &domain, const Mesh &mesh) {
 		domain.setSurfaceRecorder(recorderSF);
 	}
 	
-	if (mSaveWavefieldDomain && !mComputeKernels) {
+	if (mSaveWavefieldDomain) {
 		
 		bool write = true;
 		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mBufferSizeWvf, write, mSrcLat, mSrcLon, mSrcDep);
@@ -173,13 +174,10 @@ void ReceiverCollection::release(Domain &domain, const Mesh &mesh) {
 		domain.setDomainRecorder(recorderDM);
 	} 
 	
-	if (mComputeKernels) {
+	if (mComputeKernels && ! mSaveWavefieldDomain) {
 		
 		bool write = false;
-		if (mSaveWavefieldDomain) write = true;
-		// if kernels we want the whole wavefield in memory so buffer size = total record steps
-		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mTotalRecordStepsWvf, write, mSrcLat, mSrcLon, mSrcDep);
-		
+		DomainRecorder *recorderDM = new DomainRecorder(mTotalRecordStepsWvf, mRecordIntervalWvf, mBufferSizeWvf, write, mSrcLat, mSrcLon, mSrcDep);
 		for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {
 			Element *elem = domain.getElement(ielem);
 			if ( elem->needDumping(mRmin,mRmax,mThetaMin,mThetaMax) ) {

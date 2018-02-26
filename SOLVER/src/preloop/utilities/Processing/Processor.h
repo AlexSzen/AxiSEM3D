@@ -12,12 +12,14 @@ class Processor {
 
 public:	
 	// we can initialize once in preloop, and re initialize during kernels 
-	static void initialize(int totSteps, const RColX &bufTime, const RMatX2 filtParams);
+	static void initialize(int totSteps, const RColX &bufTime);
 	static void finalize();
 	
 	
 	static void zeroPad(RColX &trace, int npad);
 	static void taper(vec_vec_ar3_CMatPP &u);
+	static void taper(RMatX3 &trace, Real begWin, Real endWin);
+	static void createFilters(const RMatXX &filter_params);
 	
 	// processing for kernels 
 	static void transformT2F(const vec_ar3_RMatPP& ut, vec_ar3_CMatPP& uf);
@@ -28,9 +30,10 @@ public:
 	static void transformF2T(const vec_ar6_CMatPP& uf, vec_ar6_RMatPP& ut);
 	static void transformF2T(const vec_ar9_CMatPP& uf, vec_ar9_RMatPP& ut);
 	
-	// preloop processing of seismograms 
-	static void transformT2F_preloop(const RMatX3& ut, CMatX3& uf);
-	static void transformF2T_preloop(const CMatX3& uf, RMatX3& ut);
+	// processing for seismograms 
+	static void transformT2F(const RMatX3 &ut, CMatX3 &uf);
+	static void transformF2T(const CMatX3 &uf, RMatX3 &ut);
+
 
 
 	template<class vec_arY_CMatPP>
@@ -42,7 +45,17 @@ public:
 			for (int ic = 0; ic < uf[0].size(); ic++)
 				uf[i][ic] *= sFilters(ifilt,i);
 	};
-
+	
+	static void filter(CMatX3 &trace, int ifilter) {
+		
+		if (sFilters.cols() != trace.rows()) throw std::runtime_error("Processor::filter error : filter and trace of different lengths.");
+		for (int i = 0; i < trace.rows(); i++) {
+			for (int ic = 0; ic < trace.cols(); ic++) {
+				trace(i,ic) *= sFilters(ifilter, i);
+			}			
+		}
+		
+	}
 	// take (time) derivative in frequency domain, i.e multiply by 2*pi*i*f
 	template<class vec_arY_CMatPP>
 	static void derivate(vec_arY_CMatPP &uf) {

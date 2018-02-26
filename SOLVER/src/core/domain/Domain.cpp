@@ -191,7 +191,9 @@ void Domain::coupleSolidFluid() const {
 }
 
 void Domain::initializeRecorders() const {
-    mPointwiseRecorder->initialize();
+    if (mPointwiseRecorder) {
+		mPointwiseRecorder->initialize();
+	}
 	if (mSurfaceRecorder) {
 		mSurfaceRecorder->initialize();
 	}
@@ -201,7 +203,9 @@ void Domain::initializeRecorders() const {
 }
 
 void Domain::finalizeRecorders() const {
-    mPointwiseRecorder->finalize();
+	if (mPointwiseRecorder) {
+    	mPointwiseRecorder->finalize();
+	}
 	if (mSurfaceRecorder) {
 		mSurfaceRecorder->finalize();
 	}
@@ -215,7 +219,9 @@ void Domain::record(int tstep, Real t) const {
         mTimerOthers->resume();
     #endif
     
-    mPointwiseRecorder->record(tstep, t);
+	if (mPointwiseRecorder) {
+    	mPointwiseRecorder->record(tstep, t);
+	}
 	if (mSurfaceRecorder) {
 		mSurfaceRecorder->record(tstep, t);
     }
@@ -233,13 +239,19 @@ void Domain::dumpLeft() const {
         mTimerOthers->resume();
     #endif
     
-    mPointwiseRecorder->dumpToFile();
+	if (mPointwiseRecorder) {
+    	mPointwiseRecorder->dumpToFile();
+	}
 	if (mSurfaceRecorder) {
 		mSurfaceRecorder->dumpToFile();
 	}
 	
 	if (mDomainRecorder) {
 		mDomainRecorder->dumpToFile();
+	}
+	
+	if (mKerner) {
+		mKerner->dumpToFile();
 	}
     
     #ifdef _MEASURE_TIMELOOP
@@ -255,8 +267,8 @@ void Domain::finalizeKerner() {
 	if (mKerner) mKerner->finalize();
 }
 
-void Domain::computeKernels( int verbose ) {
-	if (mKerner) mKerner->computeKernels(verbose);
+void Domain::computeKernels( int tstep ) {
+	if (mKerner) mKerner->computeKernels( tstep );
 }
 
 void Domain::checkStability(double dt, int tstep, double t) const {

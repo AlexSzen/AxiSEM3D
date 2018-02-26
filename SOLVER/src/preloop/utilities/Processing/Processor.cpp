@@ -22,7 +22,7 @@ Real Processor::sWindowBeg = 0.;
 Real Processor::sWindowEnd = 0.;
 int Processor::sNumFilters = 0;
 
-void Processor::initialize(int totSteps, const RColX &bufTime, const RMatX2 filtParams) {
+void Processor::initialize(int totSteps, const RColX &bufTime) {
 
 	// get dt 
 	sTime = bufTime;
@@ -33,14 +33,16 @@ void Processor::initialize(int totSteps, const RColX &bufTime, const RMatX2 filt
 	// create taper with current time 
 	Tapers::cosineTaper(sTaper, temp_size);
 
-	// prolong taper 
-	zeroPad(sTaper, totSteps);
+	if (temp_size != totSteps) {
+		// prolong taper 
+		zeroPad(sTaper, totSteps);
 
-	// prolong time 
-	zeroPad(sTime, totSteps);
-	
-	for (int i = 0; i < totSteps - temp_size; i++) {
-		sTime(temp_size + i) = temp_T + (i+1) * sDt;
+		// prolong time 
+		zeroPad(sTime, totSteps);
+		
+		for (int i = 0; i < totSteps - temp_size; i++) {
+			sTime(temp_size + i) = temp_T + (i+1) * sDt;
+		}
 	}
 	
 	// new total time
@@ -53,15 +55,6 @@ void Processor::initialize(int totSteps, const RColX &bufTime, const RMatX2 filt
 	for (int i = 0; i < totSteps/2 + 1; i++) {
 		sFreq(i) = i * sDf;
 	}
-	
-	// create filters 
-	sNumFilters = filtParams.rows();
-	sFilters = RMatXX(sNumFilters, sFreq.size());
-	
-	for (int i = 0; i< sNumFilters; i++) {
-		Filters::logGabor(sFilters, sFreq, one/filtParams(i,0), filtParams(i,1), i);
-	}
-	
 }
 
 void Processor::finalize() {
@@ -69,14 +62,40 @@ void Processor::finalize() {
 	
 }
 
+void Processor::createFilters(const RMatXX &filter_params) {
+	
+	sNumFilters = filter_params.rows();
+	sFilters = RMatXX(sNumFilters, sFreq.size());
+	for (int ifilt = 0; ifilt < sNumFilters; ifilt++) {
+		Filters::logGabor(sFilters, sFreq, one / filter_params(ifilt, 0), filter_params(ifilt, 1), ifilt);
+	}
+	
+}
+
 void Processor::taper(vec_vec_ar3_CMatPP &u) {
 	
-	if (u.size() != sTaper.size()) throw std::runtime_error("Processor::taper error : trace and taper have different sizes.");
+	if (u.size() != sTaper.size()) throw std::runtime_error("Processor::taper || Error : trace and taper have different sizes.");
 
 	for (int it = 0; it < u.size(); it++)
 		for (int inu = 0; inu < u[0].size(); inu++)
 			for (int ic = 0; ic < 3; ic++)
 				u[it][inu][ic] *= sTaper(it);
+	
+}
+
+void Processor::taper(RMatX3 &trace, Real begWin, Real endWin) {
+	
+	if (trace.rows() != sTime.size()) throw std::runtime_error("Processor::taper || Error : trace and taper have different sizes.");
+	
+	RColX taper;
+	Tapers::cosineTaper(taper, sTime, begWin, endWin);
+		
+	for (int it = 0; it < trace.rows(); it++) {
+		for (int ic = 0; ic < trace.cols(); ic++) {
+			trace(it, ic) *= taper(it);
+		}
+	}
+	
 	
 }
 
@@ -90,7 +109,14 @@ void Processor::zeroPad(RColX &trace, int npad) {
 	}
 }
 
-
+void Processor::transformT2F(const RMatX3 &ut, CMatX3 &uf) {
+	
+	RMatX3 &tempT = PreloopFFTW_time::getR2C_RMat();
+	tempT = ut;
+	PreloopFFTW_time::computeR2C();
+	uf = PreloopFFTW_time::getR2C_CMat();
+	
+}
 
 void Processor::transformT2F(const vec_ar3_RMatPP& ut, vec_ar3_CMatPP& uf) {
 	
@@ -127,6 +153,15 @@ void Processor::transformT2F(const vec_ar9_RMatPP& ut, vec_ar9_CMatPP& uf) {
 
 }
 
+void Processor::transformF2T(const CMatX3 &uf, RMatX3 &ut) {
+	
+	CMatX3 &tempF = PreloopFFTW_time::getC2R_CMat();
+	tempF = uf;
+	PreloopFFTW_time::computeC2R();
+	ut = PreloopFFTW_time::getC2R_RMat();
+	
+}
+
 void Processor::transformF2T(const vec_ar3_CMatPP& uf, vec_ar3_RMatPP& ut) {
 	
 	CMatXN3 &tempF = KernerFFTW_N3::getC2R_CMat();
@@ -155,22 +190,4 @@ void Processor::transformF2T(const vec_ar9_CMatPP& uf, vec_ar9_RMatPP& ut) {
 	RMatXN9 tempT = KernerFFTW_N9::getC2R_RMat();
 	makeStruct<vec_ar9_RMatPP, RMatXN9>(ut, tempT);
 
-}
-
-void Processor::transformT2F_preloop(const RMatX3& ut, CMatX3& uf) {
-	
-	RMatX3 &tempT = PreloopFFTW_time::getR2C_RMat();
-	tempT = ut;
-	PreloopFFTW_time::computeR2C();
-	uf = PreloopFFTW_time::getR2C_CMat();
-		
-}
-
-void Processor::transformF2T_preloop(const CMatX3& uf, RMatX3& ut) {
-	
-	CMatX3 &tempF = PreloopFFTW_time::getC2R_CMat();
-	tempF = uf;
-	PreloopFFTW_time::computeC2R();
-	ut = PreloopFFTW_time::getC2R_RMat();
-		
 }

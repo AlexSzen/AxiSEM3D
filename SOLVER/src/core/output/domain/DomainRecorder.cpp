@@ -35,11 +35,15 @@ void DomainRecorder::initialize() {
 	}
 	vec_ar6_RMatPP initBuf(totNu, zero_ar6_RMatPP);
 	mBufferDisp.assign(mBufferSize, initBuf);
-	mIO->initialize(mTotalRecordSteps, mRecordInterval, mBufferSize, totNu, mSrcLat, mSrcLon, mSrcDep);
+	if (mWrite) {
+		mIO->initialize(mTotalRecordSteps, mRecordInterval, mBufferSize, totNu, mSrcLat, mSrcLon, mSrcDep);
+	}
 }
 
 void DomainRecorder::finalize() {
-	mIO->finalize();
+	if (mWrite) {
+		mIO->finalize();
+	}
 }
 
 void DomainRecorder::record(int tstep, Real t) {
@@ -67,7 +71,8 @@ void DomainRecorder::record(int tstep, Real t) {
 }
 
 void DomainRecorder::dumpToFile() {
-	if (mWrite)
+	if (mWrite) {
 		mIO->dumpToFile(mBufferDisp, mBufferTime, mBufferLineTime);
+	}
 	mBufferLineTime = 0;
 }
