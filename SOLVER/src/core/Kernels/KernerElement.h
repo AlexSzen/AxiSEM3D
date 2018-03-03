@@ -9,10 +9,10 @@
 class KernerElement {
 	
 public:
-	KernerElement(const Element *elem);
-	void computeKernels(bool dumpTimeKernels);
-	void computeKernels2(); // compute for adjoint source
-	void feedKernels(vec_vec_ar6_RMatPP &physKernels, int nuLine, int nuElem, bool dumpTimeKernels);
+	KernerElement(const Element *elem, int bufferSize, Real deltaT);
+	void initWorkspace();
+	void computeKernels(); // compute for adjoint source
+	void feedKernels(vec_vec_ar6_RMatPP &physKernels, int nuLine, int nuElem, bool dumpTimeKernels, int tstep);
 	void clearKernels() {mPhysicalKernels.clear(); mBaseKernels.clear();};
 	void test();
 	
@@ -39,11 +39,13 @@ private:
 	int mNuForward, mNuMax;
 	int mNrForward, mNrMax;
 	int mNyquistFwd, mNyquistMax;
-	int mTimeLine = 0;
 	// time and freq len 
 	int mTimeSize, mFreqSize;
 	// size of adjoint buffer 
 	int mBufferSize;
+	// time step of wvf
+	Real mDeltaT;
+	
 	// fields 
 	vec_vec_ar3_CMatPP mForwardDisp;
 	vec_vec_ar3_CMatPP mBackwardDisp;
@@ -54,6 +56,7 @@ private:
 	// base kernels (time integrated). 
 	// numbering is rho, lambda, mu, a, b, c. 
 	vec_vec_ar9_CMatPP mBaseKernels;
+	vec_ar9_CMatPP mBufferKernels; //hold the last time step for the time movies
 	
 	// physical kernels (time integrated) for each filter
 	// numbering is rho, vsh, vsv, vph, vpv, eta.

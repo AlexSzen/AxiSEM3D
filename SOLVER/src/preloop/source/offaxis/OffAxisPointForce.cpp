@@ -45,10 +45,9 @@ void OffAxisPointForce::computeSourceFourier(const Quad &myQuad,
             double fact = interpFactXii(ipol) * interpFactEta(jpol);
 			for (int beta = 0; beta <= nu; beta++) {
 				for (int idim = 0; idim < 3; idim++) {
-					if (idim == 2) {// only monopole vertical force 
-						fouriers[ipnt](beta, idim) = Complex(
-							1e10 * fact * exp(beta * phi * iid) * JPRT(ipnt));
-					}
+					fouriers[ipnt](beta, idim) = Complex( 
+						fact * exp(beta * phi * iid) * JPRT(ipnt));
+					
 				}
 			}
 		}
@@ -57,6 +56,12 @@ void OffAxisPointForce::computeSourceFourier(const Quad &myQuad,
 }
 
 std::string OffAxisPointForce::verbose() const {
-	// TODO: should be verbosed collectively like receivers
-	return "";
+	std::stringstream ss;
+    ss << "\n================ Source ================" << std::endl;
+    ss << "  Type         =   " << "Adjoint Source" << std::endl;
+    ss << "  Latitude     =   " << mLatitude << std::endl;
+    ss << "  Longitude    =   " << mLongitude << std::endl;
+    ss << "  Depth (km)   =   " << mDepth / 1e3 << std::endl;
+    ss << "================ Source ================\n" << std::endl;
+	return ss.str();
 }

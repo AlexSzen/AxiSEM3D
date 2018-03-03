@@ -29,10 +29,6 @@ void Kernels::buildInparam(Kernels *&kernels, const Parameters &par, int totalSt
 	if (!computeKer) return;
 	
 	kernels->mMaxStep = totalStepsSTF;
-	kernels->mRmin = par.getValue<double>("RMIN")*1e3;
-	kernels->mRmax = par.getValue<double>("RMAX")*1e3;
-	kernels->mThetaMin = par.getValue<double>("THETA_MIN")*degree;
-	kernels->mThetaMax = par.getValue<double>("THETA_MAX")*degree;
 	kernels->mDumpTimeKernels = par.getValue<bool>("OUTPUT_TIME_KERNELS");
 	
 	int recInterval = par.getValue<int>("WAVEFIELD_RECORD_INTERVAL");
@@ -48,14 +44,14 @@ void Kernels::buildInparam(Kernels *&kernels, const Parameters &par, int totalSt
 	
 	kernels->mBufferSize = par.getValue<int>("WAVEFIELD_DUMP_INTERVAL");
 	if (kernels->mBufferSize <= 0) {
-		kernels->mBufferSize = 10;
+		kernels->mBufferSize = 1;
 	}
 	
 	if (verbose) XMPI::cout << kernels->verbose();
 
 }
 
-void Kernels::release(Domain &domain, const Mesh &mesh) {
+void Kernels::release(Domain &domain, double deltaT) {
 	
 	if (!mComputeKernels) return;
 	
@@ -63,10 +59,9 @@ void Kernels::release(Domain &domain, const Mesh &mesh) {
 	
 	for (int ielem = 0; ielem < domain.getNumElements(); ielem ++) {
 		Element *elem = domain.getElement(ielem);
-		if ( elem->needDumping(mRmin,mRmax,mThetaMin,mThetaMax) ) {
-			KernerElement *kerElem = new KernerElement(elem);
-			kerner->addKernerElement(kerElem);
-		}
+		KernerElement *kerElem = new KernerElement(elem, mBufferSize, (Real) deltaT / mRecordInterval);
+		kerner->addKernerElement(kerElem);
+	
 	}
 	kerner->setDomainRecorder(domain.getDomainRecorder());
 	domain.setKerner(kerner);

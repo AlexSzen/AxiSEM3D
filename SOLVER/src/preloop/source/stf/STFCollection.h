@@ -23,7 +23,7 @@ public:
     static void buildInparam(STFCollection *&stf, const Parameters &par, double dt, int verbose);
     
     int getSize() const {return mSTFs[0]->getSize();};
-
+	double getDeltaT() const {return mSTFs[0]->getDeltaT();};
 protected:
     double mDeltaT;
     double mShift;

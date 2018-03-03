@@ -34,7 +34,7 @@ private:
 	void distributeFwdWvfToElements();
 	void distributeBwdWvfToElements();
 	void distributeMaterialToElements();
-	
+	void distributeNus();
 	
 	DomainRecorder *mDomainRecorder;
 	KernerIO *mIO;

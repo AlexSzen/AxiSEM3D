@@ -24,6 +24,7 @@ public:
     virtual std::string verbose() const = 0;
     
     int getSize() const {return mSTFs.size();};
+	double getDeltaT() const {return mDeltaT;};
 
 protected:
     double mDeltaT;

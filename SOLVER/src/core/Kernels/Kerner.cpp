@@ -35,14 +35,15 @@ void Kerner::initialize() {
 	startElem = std::accumulate(countElem.begin(), countElem.begin()+XMPI::rank(),0);
 	int totElems = XMPI::sum((int) mKerElements.size());
 	
-	mIO = new KernerIO(mDumpTimeKernels, startElem, countElem[XMPI::rank()], mTotSteps);
-	// distribute forward. for now we load all fwd field in memory at the beginning.
-	distributeFwdWvfToElements();
+	mIO = new KernerIO(mDumpTimeKernels, startElem, countElem[XMPI::rank()], mTotSteps, mBufferSize);
+	
+	// distribute Nus  
+	distributeNus();
 	//distribute materials
 	distributeMaterialToElements();
-
-	// gather nus
 	
+	
+	// gather nus and initialize workspace of elements
 	int totNu = 0; 
 	for (int ielem = 0; ielem < mKerElements.size(); ielem++) {
 
@@ -66,7 +67,7 @@ void Kerner::initialize() {
 	startElemNu = std::accumulate(countElemNu.begin(), countElemNu.begin() + XMPI::rank(), 0);
 	int totTotNu = XMPI::sum(totNu);
 	
-	mIO->initialize(totTotNu, startElemNu, countElemNu[XMPI::rank()], totElems);
+	mIO->initialize(totTotNu, startElemNu, countElemNu[XMPI::rank()], totElems, mNusKernel, mNrsKernel);
 
 	
 }
@@ -86,6 +87,8 @@ void Kerner::computeKernels( int tstep ) {
 	
 	if ((tstep % (mBufferSize * mRecordInterval) == 0) || (tstep == mMaxStep) ) {
 		
+		// distribute forward
+		distributeFwdWvfToElements();
 		// distribute backward each time we compute the kernels 
 		distributeBwdWvfToElements();
 
@@ -102,45 +105,38 @@ void Kerner::computeKernels( int tstep ) {
 				kerElem->setBufferSize(mBufferSize);
 			}
 						
-			kerElem->computeKernels2();
-			kerElem->feedKernels(mPhysicalKernels, nuLine, nuMax, mDumpTimeKernels);
+			kerElem->computeKernels();
+			kerElem->feedKernels(mPhysicalKernels, nuLine, nuMax, mDumpTimeKernels, tstep);
 			kerElem->clearKernels();
 			nuLine += nuMax + 1;
 
 		}
-		XMPI::barrier();
+		if (mDumpTimeKernels) dumpToFile();
 	}
 
 }
 
 void Kerner::dumpToFile() {
-	mIO->dumpToFile(mPhysicalKernels, mNusKernel, mNrsKernel);
+	mIO->dumpToFile(mPhysicalKernels, mBufferSize);
 }
 
 void Kerner::distributeFwdWvfToElements() {
 
 	vec_vec_ar6_RMatPP forward_disp;
-	std::vector<int> Nus;
-	std::vector<int> Nrs;
 
-
-
-	mIO->loadWavefield(forward_disp, Nus, Nrs);
+	mIO->loadWavefield(forward_disp, mBufferSize);
+	
 	int nuOffset = 0;
 	for (int ielem = 0; ielem < mKerElements.size(); ielem++) {
 		
-		int nuBwd = mKerElements[ielem]->getNuBackward();
-		int nuFwd = Nus[ielem]-1;
-		int nuMax = nuBwd > nuFwd ? nuBwd : nuFwd; // we use max nu between fwd and bwd 
-		int nrBwd = mKerElements[ielem]->getNrBackward();
-		int nrFwd = Nrs[ielem];
-		int nrMax = nrBwd > nrFwd ? nrBwd : nrFwd; // we use max nr between fwd and bwd 
+		int nuFwd = mKerElements[ielem]->getNuForward();
+		int nuMax = mKerElements[ielem]->getNuMax(); 
+	
 		vec_ar3_CMatPP initDispElem(nuMax + 1, zero_ar3_CMatPP);
-		vec_vec_ar3_CMatPP dispElem(mTotSteps, initDispElem); 
+		vec_vec_ar3_CMatPP dispElem(mBufferSize, initDispElem); 
 
-		for (int it = 0; it < mTotSteps; it++) {
-			
-			
+		for (int it = 0; it < mBufferSize; it++) {
+
 			for (int inu = 0; inu <= nuFwd; inu++) {
 				
 				dispElem[it][inu][0] = forward_disp[it][nuOffset + inu][0] + ii * forward_disp[it][nuOffset + inu][1];
@@ -150,16 +146,10 @@ void Kerner::distributeFwdWvfToElements() {
 			}					
 		}
 		
-		nuOffset+=Nus[ielem];	
-		
-		// set displacement 
+		nuOffset += nuFwd + 1;	
 		mKerElements[ielem]->setForwardDisp(dispElem);
-		mKerElements[ielem]->setNuForward(Nus[ielem]-1);
-		mKerElements[ielem]->setNrForward(Nrs[ielem]);
-		mKerElements[ielem]->setNuMax(nuMax);
-		mKerElements[ielem]->setNrMax(nrMax);
-		mKerElements[ielem]->setBufferSize(mBufferSize);
-		mKerElements[ielem]->setTimeAndFreqSize(mTotSteps);
+	
+
 	}
 	
 	
@@ -167,7 +157,6 @@ void Kerner::distributeFwdWvfToElements() {
 
 void Kerner::distributeBwdWvfToElements() {
 	
-	int totStepsBwd = mBufferSize; // we don't compute at each time step but in buffers
 	int nuOffset = 0;
 
 	for (int ielem = 0; ielem < mKerElements.size(); ielem++) {
@@ -178,9 +167,9 @@ void Kerner::distributeBwdWvfToElements() {
 
 
 		vec_ar3_CMatPP initDispElem(nuMax + 1, zero_ar3_CMatPP); 
-		vec_vec_ar3_CMatPP dispElem(totStepsBwd, initDispElem); 
+		vec_vec_ar3_CMatPP dispElem(mBufferSize, initDispElem); 
 		
-		for (int it = 0; it < totStepsBwd; it++) {
+		for (int it = 0; it < mBufferSize; it++) {
 			
 			for (int inu = 0; inu <= nuBwd; inu ++) {
 				
@@ -193,7 +182,6 @@ void Kerner::distributeBwdWvfToElements() {
 		}
 		
 		nuOffset+= nuBwd + 1;	
-
 		kerElem->setBackwardDisp(dispElem);
 
 
@@ -203,18 +191,19 @@ void Kerner::distributeBwdWvfToElements() {
 
 void Kerner::distributeMaterialToElements() {
 
-	std::vector<int> NusFwd;
 	vec_ar12_RMatPP materials;	//order is real and imag of rho, vph, vpv, vsh, vsv, eta.
-	mIO->loadMaterial(materials, NusFwd);
+	mIO->loadMaterial(materials);
 	
 	int nuOffset = 0;
 
 	for (int ielem = 0; ielem < mKerElements.size(); ielem++) {
-	
-		int nuMax = mKerElements[ielem]->getNuMax();
+		
+		int nuFwd = mKerElements[ielem]->getNuForward();
+		int nuMax = mKerElements[ielem]->getNuMax(); 
+		
 		vec_ar6_CMatPP materialsElem(nuMax + 1, zero_ar6_CMatPP);
 		
-		for (int inu = 0; inu < NusFwd[ielem]; inu ++) {
+		for (int inu = 0; inu <= nuFwd; inu ++) {
 			
 			materialsElem[inu][0] = materials[nuOffset + inu][0] + ii * materials[nuOffset + inu][1];
 			materialsElem[inu][1] = materials[nuOffset + inu][2] + ii * materials[nuOffset + inu][3];
@@ -227,8 +216,36 @@ void Kerner::distributeMaterialToElements() {
 		}
 		
 		mKerElements[ielem]->setMaterials(materialsElem);
-		nuOffset+=NusFwd[ielem];	
+		nuOffset+=nuFwd + 1;	
 
+	}
+	
+}
+
+
+void Kerner::distributeNus() {
+	
+	std::vector<int> NusFwd;
+	std::vector<int> NrsFwd;
+	
+	mIO->loadNus(NusFwd);
+	mIO->loadNrs(NrsFwd);
+	
+	for (int ielem = 0; ielem < mKerElements.size(); ielem++) {
+		
+		int nuBwd = mKerElements[ielem]->getNuBackward();
+		int nuFwd = NusFwd[ielem]-1;
+		int nuMax = nuBwd > nuFwd ? nuBwd : nuFwd; // we use max nu between fwd and bwd 
+		int nrBwd = mKerElements[ielem]->getNrBackward();
+		int nrFwd = NrsFwd[ielem];
+		int nrMax = nrBwd > nrFwd ? nrBwd : nrFwd; // we use max nr between fwd and bwd 
+		
+		mKerElements[ielem]->setNuForward(nuFwd);
+		mKerElements[ielem]->setNrForward(nrFwd);
+		mKerElements[ielem]->setNuMax(nuMax);
+		mKerElements[ielem]->setNrMax(nrMax);
+		
+		
 	}
 	
 }

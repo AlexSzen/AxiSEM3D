@@ -124,7 +124,7 @@ int axisem_main(int argc, char *argv[]) {
 		MultilevelTimer::begin("Build Kernels", 0);
 		Kernels::buildInparam(pl.mKernels, *(pl.mParameters), pl.mSTFs->getSize(), verbose);
 		MultilevelTimer::end("Build Kernels", 0);
-        
+
         //////// computational domain
         MultilevelTimer::begin("Computational Domain", 0);
         sv.mDomain = new Domain();
@@ -156,7 +156,7 @@ int axisem_main(int argc, char *argv[]) {
 		
 		//release kernels
 		MultilevelTimer::begin("Release Kerner", 1);
-		pl.mKernels->release(*(sv.mDomain), *(pl.mMesh));
+		pl.mKernels->release(*(sv.mDomain), pl.mSTFs->getDeltaT());
 		sv.mDomain->initializeKerner();
 		MultilevelTimer::end("Release Kerner", 1);
         

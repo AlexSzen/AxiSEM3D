@@ -26,19 +26,36 @@ mHalfDuration(hdur_fwd), mDecay(decay_fwd) {
 	for (int i_measurement = 0; i_measurement < adjoint_params.rows(); i_measurement++) {
 		
 		RDCol2 window = adjoint_params.block(i_measurement, 0, 1, 2);		
+		double measurement = adjoint_params(i_measurement, 2);
 		
 		RMatX3 trace_measurement_T = trace;
 		CMatX3 trace_measurement_F;
 		
 		Processor::transformT2F(trace_measurement_T, trace_measurement_F);
+		Processor::derivate(trace_measurement_F);
 		Processor::filter(trace_measurement_F, filter_types[i_measurement]);
 		Processor::transformF2T(trace_measurement_F, trace_measurement_T);
 		Processor::taper(trace_measurement_T, (Real) window(0), (Real) window(1));
-
-		for (int i = 0; i <= nStep; i++) { //time reversed seismogram 
-	   	 mSTFs[i] += 1e15 * trace_measurement_T(nStep - i,0);
-	   	 mSTFp[i] += 1e15 * trace_measurement_T(nStep - i,1);
-	   	 mSTFz[i] += 1e15 * trace_measurement_T(nStep - i,2);
+		
+		Real norm_s = 0.;
+		Real norm_p = 0.;
+		Real norm_z = 0.;
+		
+		for (int it = 0; it <= nStep; it++) { //normalization factor : for traveltime tomo it's time integrated squared velocity
+			norm_s += mDeltaT * trace_measurement_T(it, 0) * trace_measurement_T(it, 0);
+			norm_p += mDeltaT * trace_measurement_T(it, 1) * trace_measurement_T(it, 1);
+			norm_z += mDeltaT * trace_measurement_T(it, 2) * trace_measurement_T(it, 2);
+		}
+		
+		if (norm_s == 0.) norm_s = 1.;
+		if (norm_p == 0.) norm_p = 1.;
+		if (norm_z == 0.) norm_z = 1.;
+		
+		for (int i = 0; i <= nStep; i++) { //time reversed seismogram. 
+		 
+	   	 mSTFs[i] += measurement * trace_measurement_T(nStep - i, 0) / norm_s;
+	   	 mSTFp[i] += measurement * trace_measurement_T(nStep - i, 1) / norm_p;
+	   	 mSTFz[i] += measurement * trace_measurement_T(nStep - i, 2) / norm_z;
 	    }
 	}
 

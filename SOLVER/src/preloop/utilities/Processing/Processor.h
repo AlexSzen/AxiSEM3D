@@ -66,6 +66,15 @@ public:
 			for (int ic = 0; ic < uf[0].size(); ic++)
 				uf[i][ic] *= two * (Real) pi * ii * sFreq(i);
 	};
+	
+	static void derivate(CMatX3 &trace) {
+		
+		if (sFreq.size() != trace.rows()) throw std::runtime_error("Processor::derivate error : frequency and trace of different lengths.");
+		
+		for (int i = 0; i < trace.rows(); i++)
+			for (int ic = 0; ic < trace.cols(); ic++)
+				trace(i,ic) *= two * (Real) pi * ii * sFreq(i);
+	};
 
 	
 	template<class vec_vec_arY_CMatPP, class vec_arY_CMatPP>

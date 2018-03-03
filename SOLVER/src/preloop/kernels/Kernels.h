@@ -21,7 +21,7 @@ public:
 	std::string verbose();
 	
 	static void buildInparam(Kernels *&kernels, const Parameters &par, int totalStepsSTF, int verbose);
-	void release(Domain &domain, const Mesh &mesh);
+	void release(Domain &domain, double deltaT);
 	
 private:
 	
