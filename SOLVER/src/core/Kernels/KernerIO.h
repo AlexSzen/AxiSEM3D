@@ -30,6 +30,7 @@ private:
 	int mBufferSize;
 	int mNumLoads; //load forward wavefield in chunks
 	bool mDumpTimeKernels;
+	int mTimeLine = 0; // for time kernels, position in time
 	
 	
 };

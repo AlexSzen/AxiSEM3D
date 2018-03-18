@@ -42,6 +42,7 @@ mHalfDuration(hdur_fwd), mDecay(decay_fwd) {
 		Real norm_z = 0.;
 		
 		for (int it = 0; it <= nStep; it++) { //normalization factor : for traveltime tomo it's time integrated squared velocity
+											 // for amplitude it's displacement 		
 			norm_s += mDeltaT * trace_measurement_T(it, 0) * trace_measurement_T(it, 0);
 			norm_p += mDeltaT * trace_measurement_T(it, 1) * trace_measurement_T(it, 1);
 			norm_z += mDeltaT * trace_measurement_T(it, 2) * trace_measurement_T(it, 2);
@@ -53,9 +54,9 @@ mHalfDuration(hdur_fwd), mDecay(decay_fwd) {
 		
 		for (int i = 0; i <= nStep; i++) { //time reversed seismogram. 
 		 
-	   	 mSTFs[i] += measurement * trace_measurement_T(nStep - i, 0) / norm_s;
-	   	 mSTFp[i] += measurement * trace_measurement_T(nStep - i, 1) / norm_p;
-	   	 mSTFz[i] += measurement * trace_measurement_T(nStep - i, 2) / norm_z;
+	   	 mSTFs[i] = measurement * trace_measurement_T(nStep - i, 0) / norm_s;
+	   	 mSTFp[i] = measurement * trace_measurement_T(nStep - i, 1) / norm_p;
+	   	 mSTFz[i] = measurement * trace_measurement_T(nStep - i, 2) / norm_z;
 	    }
 	}
 

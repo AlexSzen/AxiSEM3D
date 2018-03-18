@@ -56,7 +56,7 @@ void Kerner::initialize() {
 	//init kernel 
 	vec_ar6_RMatPP initKernels(totNu, zero_ar6_RMatPP);
 	if (mDumpTimeKernels) {
-		mPhysicalKernels.assign(mTotSteps, initKernels);
+		mPhysicalKernels.assign(mBufferSize, initKernels);
 	} else {
 		mPhysicalKernels.assign(1, initKernels);
 	}
@@ -111,7 +111,7 @@ void Kerner::computeKernels( int tstep ) {
 			nuLine += nuMax + 1;
 
 		}
-		if (mDumpTimeKernels) dumpToFile();
+		if (mDumpTimeKernels && tstep != mMaxStep) dumpToFile();
 	}
 
 }

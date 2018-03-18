@@ -43,7 +43,6 @@ void KernerElement::computeKernels() {
 	FieldFFT::makeStruct<vec_ar6_RMatPP, RMatXN6>(materialsR, unstructured_mat, mNrMax - 1);
 	
 	///// get strain and go to physical azimuthal domain 
-	Real inv_nr = one / (Real) mNrMax;
 	for (int it = 0; it < mBufferSize; it ++) {
 		// disp to strain 	
 		mElement->mGradient->computeGrad9(mForwardDisp[mBufferSize - 1 - it], strainFwdF_it, mNuMax, mNyquistFwd); //time reverse
@@ -99,28 +98,28 @@ void KernerElement::feedKernels(vec_vec_ar6_RMatPP &physKernels, int nuLine, int
 
 	if (dumpTimeKernels) { //movie
 		
-		if (tstep == 1) {
+		if (mBufferKernels.size() == 0) {
 			mBufferKernels.assign(nuElem + 1, zero_ar9_CMatPP);
 		}
-		
+	
 		for (int inu = 0; inu <= nuElem; inu ++) {
 				
 			physKernels[0][nuLine + inu][0] = mDeltaT * mBaseKernels[0][inu][0].real() + mBufferKernels[inu][0].real();
 			physKernels[0][nuLine + inu][1] = mDeltaT * mBaseKernels[0][inu][0].imag() + mBufferKernels[inu][0].imag();
-			physKernels[0][nuLine + inu][2] = mDeltaT * mBaseKernels[1][inu][0].real() + mBufferKernels[inu][1].real();
-			physKernels[0][nuLine + inu][3] = mDeltaT * mBaseKernels[1][inu][0].imag() + mBufferKernels[inu][1].imag();
-			physKernels[0][nuLine + inu][4] = mDeltaT * mBaseKernels[2][inu][0].real() + mBufferKernels[inu][2].real();
-			physKernels[0][nuLine + inu][5] = mDeltaT * mBaseKernels[2][inu][0].imag() + mBufferKernels[inu][2].imag();
+			physKernels[0][nuLine + inu][2] = mDeltaT * mBaseKernels[0][inu][1].real() + mBufferKernels[inu][1].real();
+			physKernels[0][nuLine + inu][3] = mDeltaT * mBaseKernels[0][inu][1].imag() + mBufferKernels[inu][1].imag();
+			physKernels[0][nuLine + inu][4] = mDeltaT * mBaseKernels[0][inu][2].real() + mBufferKernels[inu][2].real();
+			physKernels[0][nuLine + inu][5] = mDeltaT * mBaseKernels[0][inu][2].imag() + mBufferKernels[inu][2].imag();
 		
 			for (int it = 1; it < mBufferSize; it ++) {
 		
 				
-				physKernels[it][nuLine + inu][0] = mDeltaT * mBaseKernels[it][inu][0].real();
-				physKernels[it][nuLine + inu][1] = mDeltaT * mBaseKernels[it][inu][0].imag();
-				physKernels[it][nuLine + inu][2] = mDeltaT * mBaseKernels[it][inu][1].real();
-				physKernels[it][nuLine + inu][3] = mDeltaT * mBaseKernels[it][inu][1].imag();
-				physKernels[it][nuLine + inu][4] = mDeltaT * mBaseKernels[it][inu][2].real();
-				physKernels[it][nuLine + inu][5] = mDeltaT * mBaseKernels[it][inu][2].imag();
+				physKernels[it][nuLine + inu][0] += physKernels[it-1][nuLine + inu][0] + mDeltaT * mBaseKernels[it][inu][0].real();
+				physKernels[it][nuLine + inu][1] += physKernels[it-1][nuLine + inu][1] + mDeltaT * mBaseKernels[it][inu][0].imag();
+				physKernels[it][nuLine + inu][2] += physKernels[it-1][nuLine + inu][2] + mDeltaT * mBaseKernels[it][inu][1].real();
+				physKernels[it][nuLine + inu][3] += physKernels[it-1][nuLine + inu][3] + mDeltaT * mBaseKernels[it][inu][1].imag();
+				physKernels[it][nuLine + inu][4] += physKernels[it-1][nuLine + inu][4] + mDeltaT * mBaseKernels[it][inu][2].real();
+				physKernels[it][nuLine + inu][5] += physKernels[it-1][nuLine + inu][5] + mDeltaT * mBaseKernels[it][inu][2].imag();
 
 				
 			}
@@ -129,10 +128,10 @@ void KernerElement::feedKernels(vec_vec_ar6_RMatPP &physKernels, int nuLine, int
 		
 		mBufferKernels[inu][0].real() = physKernels[mBufferSize - 1][nuLine + inu][0];
 		mBufferKernels[inu][0].imag() = physKernels[mBufferSize - 1][nuLine + inu][1];
-		mBufferKernels[inu][1].real() = physKernels[mBufferSize - 1][nuLine + inu][0];
-		mBufferKernels[inu][1].imag() = physKernels[mBufferSize - 1][nuLine + inu][0];
-		mBufferKernels[inu][2].real() = physKernels[mBufferSize - 1][nuLine + inu][0];
-		mBufferKernels[inu][2].imag() = physKernels[mBufferSize - 1][nuLine + inu][0];
+		mBufferKernels[inu][1].real() = physKernels[mBufferSize - 1][nuLine + inu][2];
+		mBufferKernels[inu][1].imag() = physKernels[mBufferSize - 1][nuLine + inu][3];
+		mBufferKernels[inu][2].real() = physKernels[mBufferSize - 1][nuLine + inu][4];
+		mBufferKernels[inu][2].imag() = physKernels[mBufferSize - 1][nuLine + inu][5];
 	}
 
 	} else {

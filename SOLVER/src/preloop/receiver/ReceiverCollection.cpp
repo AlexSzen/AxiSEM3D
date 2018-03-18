@@ -142,10 +142,10 @@ void ReceiverCollection::release(Domain &domain, const Mesh &mesh) {
         recorderPW->addIO(io);
     }
     
-	if (!mComputeKernels) { //if kernels receivers make no sense (at the moment, since we use the file in stations)
+	//if (!mComputeKernels) { //if kernels receivers make no sense (at the moment, since we use the file in stations)
     	// add recorder to domain
     	domain.setPointwiseRecorder(recorderPW);
-	}
+	//}
 	// whole surface
 	if (mSaveWholeSurface) {
 		SurfaceRecorder *recorderSF = new SurfaceRecorder(mTotalRecordSteps, 

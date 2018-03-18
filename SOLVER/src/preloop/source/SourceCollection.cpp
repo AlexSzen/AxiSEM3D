@@ -170,7 +170,7 @@ SourceCollection::SourceCollection(std::string axis_file, std::string axis_type,
 
 		// create sources
 		std::vector<std::string> recKeys;
-		for (int i = 0; i < name.size(); i++) {
+		for (int i = 0; i < 1; i++) {
 			// check duplicated
 			std::string key = network[i] + "." + name[i];
 			if (std::find(recKeys.begin(), recKeys.end(), key) != recKeys.end()) {

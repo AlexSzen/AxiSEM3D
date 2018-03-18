@@ -9,7 +9,7 @@
 #include <sstream>
 #include "Source.h"
 #include "Relabelling.h"
-
+#include <iostream>
 OffAxisPointForce::OffAxisPointForce(double depth, double lat, double lon,
 	double srcLat, double srcLon, double srcDep): Source(depth, lat, lon, srcLat, srcLon, srcDep)
  {
@@ -38,20 +38,25 @@ void OffAxisPointForce::computeSourceFourier(const Quad &myQuad,
     } else {
 		JPRT = RDRowN::Ones();
 	}
+	//double eps = 1e-9; //we want the gaussian(numax) = eps 
+	double a = 0.02;// sqrt( - (4./pow(nu,2.)) * log(eps) ); // a = variance / sqrt(2) 
     // compute source pointwise
 	for (int ipol = 0; ipol <= nPol; ipol++) {
         for (int jpol = 0; jpol <= nPol; jpol++) {
             int ipnt = ipol * nPntEdge + jpol;
             double fact = interpFactXii(ipol) * interpFactEta(jpol);
 			for (int beta = 0; beta <= nu; beta++) {
+				double gauss_fact = exp( - pow(a, 2.) * pow(beta, 2.) / 4); //gaussian approximate delta in freq domain    
 				for (int idim = 0; idim < 3; idim++) {
-					fouriers[ipnt](beta, idim) = Complex( 
-						fact * exp(beta * phi * iid) * JPRT(ipnt));
+					fouriers[ipnt](beta, 2) = Complex( 
+						(1. / (2. * pi)) *  fact * gauss_fact * exp(beta * phi * iid) * JPRT(ipnt));
 					
 				}
 			}
 		}
     }
+	
+
 	
 }
 

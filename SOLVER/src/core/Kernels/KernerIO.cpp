@@ -83,7 +83,7 @@ void KernerIO::finalize() {
 void KernerIO::dumpToFile(const vec_vec_ar6_RMatPP &kernels, int bufferSize) {
 	
 	std::vector<size_t> startKernels, countKernels;
-	startKernels.push_back(0);
+	startKernels.push_back(mTimeLine);
 	startKernels.push_back(mStartElemNuKernels);
 	startKernels.push_back(0);
 	startKernels.push_back(0);
@@ -105,6 +105,7 @@ void KernerIO::dumpToFile(const vec_vec_ar6_RMatPP &kernels, int bufferSize) {
 		startKernels[0]++;
 		
 	}
+	mTimeLine += dumpSize;
 
 }
 
