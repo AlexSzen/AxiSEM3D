@@ -102,9 +102,10 @@ void MeshIO::dumpFields(const Domain &domain, const Parameters &par) {
 			(mesh_vs_ani.back())[0] = vs_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).real();
 			(mesh_vs_ani.back())[1] = vs_elem[ialpha].block(nPntEdge/2-gll_ani/2, nPntEdge/2-gll_ani/2, gll_ani, gll_ani).imag();
 			*/
-			for (int ipol = 0; ipol < nPntEdge; ipol ++)
-				for (int jpol = 0; jpol < nPntEdge; jpol++)
-					vp[nuline][0](ipol,jpol) = (Real) elem->getDomainTag();
+
+			vp[ialpha][0] = vp_elem[ialpha].real();
+			vp[ialpha][1] = vp_elem[ialpha].imag();
+			
 			materials.push_back(zero_ar12_RMatPP);
 			
 			if (ialpha<rho_elem.size()) {
@@ -112,8 +113,8 @@ void MeshIO::dumpFields(const Domain &domain, const Parameters &par) {
 				materials.back()[1] = rho_elem[ialpha].imag();
 			}
 			if (ialpha<vph_elem.size()) {
-				materials.back()[2] = vph_elem[ialpha].real();
-				materials.back()[3] = vph_elem[ialpha].imag();
+				materials.back()[2] = vp_elem[ialpha].real();
+				materials.back()[3] = vp_elem[ialpha].imag();
 			}
 			if (ialpha<vpv_elem.size()) {
 				materials.back()[4] = vpv_elem[ialpha].real();

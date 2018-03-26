@@ -29,7 +29,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include "SlicePlot.h"
-
+#include <iostream>
 Material::Material(const Quad *myQuad, const ExodusModel &exModel): mMyQuad(myQuad) {
     // read Exodus model
     int quadTag = mMyQuad->getQuadTag();
@@ -190,11 +190,12 @@ void Material::addVolumetric3D(const std::vector<Volumetric3D *> &m3D,
                         RDMatXN &mat3D = *prop3DPtr[propertiesTIso[iprop]];
                         Volumetric3D::MaterialRefType ref_type = refTypesTIso[iprop];
                         double value3D = valuesTIso[iprop];
+						double perturb = 0.00; // SMALL PERTURBATION FOR TEST KERNELS
                         if (ref_type == Volumetric3D::MaterialRefType::Absolute) {
                             mat3D(alpha, ipnt) = value3D;
                         } else if (ref_type == Volumetric3D::MaterialRefType::Reference1D) {
                             double ref1D = Mapping::interpolate(row1D, xieta);
-                            mat3D(alpha, ipnt) = ref1D * (1. + value3D);
+                            mat3D(alpha, ipnt) = ref1D * (1. + perturb + value3D);
                         } else if (ref_type == Volumetric3D::MaterialRefType::Reference3D) {
                             mat3D(alpha, ipnt) *= 1. + value3D;
                         } else {

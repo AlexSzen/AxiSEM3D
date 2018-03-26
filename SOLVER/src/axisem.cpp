@@ -156,7 +156,7 @@ int axisem_main(int argc, char *argv[]) {
 		
 		//release kernels
 		MultilevelTimer::begin("Release Kerner", 1);
-		//pl.mKernels->release(*(sv.mDomain), pl.mSTFs->getDeltaT());
+		pl.mKernels->release(*(sv.mDomain), pl.mSTFs->getDeltaT());
 		sv.mDomain->initializeKerner();
 		MultilevelTimer::end("Release Kerner", 1);
         
